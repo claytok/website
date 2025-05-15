@@ -1,42 +1,129 @@
 // SVG icons data
 const svgIcons = {
-    "microscope": `<svg viewBox="0 0 24 24" width="100%" height="100%">
-        <path d="M18,2h-7v2h7c0.55,0,1,0.45,1,1v7h2V5C21,3.34,19.66,2,18,2z" fill="currentColor"/>
-        <path d="M11,12c-0.55,0-1,0.45-1,1v1H6.5C5.12,14,4,15.12,4,16.5S5.12,19,6.5,19H15c1.1,0,2-0.9,2-2v-4H11z M13,17H6.5 C6.22,17,6,16.78,6,16.5S6.22,16,6.5,16H13V17z" fill="currentColor"/>
-        <path d="M10,5v5c0,0.55,0.45,1,1,1h5V5H10z" fill="currentColor"/>
-        <path d="M12,9.5c-0.55,0-1-0.45-1-1s0.45-1,1-1s1,0.45,1,1S12.55,9.5,12,9.5z" fill="currentColor"/>
+    "dna-helix": `<svg viewBox="0 0 64 64" width="100%" height="100%">
+        <!-- Main helical strands -->
+        <path d="M 20,4 C 25,8 39,8 44,12 C 39,16 25,16 20,20 C 25,24 39,24 44,28 C 39,32 25,32 20,36 C 25,40 39,40 44,44 C 39,48 25,48 20,52 C 25,56 39,56 44,60" fill="none" stroke="#1B2A41" stroke-width="2" />
+        <path d="M 44,4 C 39,8 25,8 20,12 C 25,16 39,16 44,20 C 39,24 25,24 20,28 C 25,32 39,32 44,36 C 39,40 25,40 20,44 C 25,48 39,48 44,52 C 39,56 25,56 20,60" fill="none" stroke="#FF6B6B" stroke-width="2" />
+        
+        <!-- Base pairs connecting the strands -->
+        <line stroke="#4ECDC4" stroke-width="1.5" x1="20" y1="4" x2="44" y2="4" />
+        <line stroke="#4ECDC4" stroke-width="1.5" x1="20" y1="20" x2="44" y2="20" />
+        <line stroke="#4ECDC4" stroke-width="1.5" x1="20" y1="36" x2="44" y2="36" />
+        <line stroke="#4ECDC4" stroke-width="1.5" x1="20" y1="52" x2="44" y2="52" />
+        
+        <!-- Base pairs - adjusted to be visible -->
+        <line stroke="#4ECDC4" stroke-width="1.5" x1="26" y1="12" x2="38" y2="12" />
+        <line stroke="#4ECDC4" stroke-width="1.5" x1="26" y1="28" x2="38" y2="28" />
+        <line stroke="#4ECDC4" stroke-width="1.5" x1="26" y1="44" x2="38" y2="44" />
+        <line stroke="#4ECDC4" stroke-width="1.5" x1="26" y1="60" x2="38" y2="60" />
     </svg>`,
-    "petri-dish": `<svg viewBox="0 0 24 24" width="100%" height="100%">
-        <path d="M12,2C6.48,2,2,6.48,2,12s4.48,10,10,10s10-4.48,10-10S17.52,2,12,2z M12,20c-4.42,0-8-3.58-8-8s3.58-8,8-8s8,3.58,8,8 S16.42,20,12,20z" fill="currentColor"/>
-        <circle cx="8.5" cy="9.5" r="1.5" fill="currentColor"/>
-        <circle cx="11.5" cy="7" r="1" fill="currentColor"/>
-        <circle cx="15" cy="9" r="1" fill="currentColor"/>
-        <circle cx="10" cy="13" r="1.5" fill="currentColor"/>
-        <circle cx="15.5" cy="14" r="1.5" fill="currentColor"/>
-        <circle cx="8" cy="16" r="1" fill="currentColor"/>
+    "nanoparticle": `<svg viewBox="0 0 64 64" width="100%" height="100%">
+        <!-- Main nanoparticle sphere with flat color -->
+        <circle cx="32" cy="32" r="20" fill="#4ECDC4" stroke="#1B2A41" stroke-width="2" />
+        
+        <!-- Surface functionalization molecules - simplified and flatter -->
+        <line x1="32" y1="12" x2="32" y2="6" stroke="#FF6B6B" stroke-width="2" />
+        <circle cx="32" cy="4" r="2" fill="#FF6B6B" />
+        
+        <line x1="50" y1="25" x2="54" y2="22" stroke="#FF6B6B" stroke-width="2" />
+        <circle cx="56" cy="20" r="2" fill="#FF6B6B" />
+        
+        <line x1="48" y1="40" x2="54" y2="44" stroke="#FF6B6B" stroke-width="2" />
+        <circle cx="56" cy="46" r="2" fill="#FF6B6B" />
+        
+        <line x1="32" y1="52" x2="32" y2="58" stroke="#FF6B6B" stroke-width="2" />
+        <circle cx="32" cy="60" r="2" fill="#FF6B6B" />
+        
+        <line x1="14" y1="25" x2="10" y2="22" stroke="#FF6B6B" stroke-width="2" />
+        <circle cx="8" cy="20" r="2" fill="#FF6B6B" />
+        
+        <line x1="16" y1="40" x2="10" y2="44" stroke="#FF6B6B" stroke-width="2" />
+        <circle cx="8" cy="46" r="2" fill="#FF6B6B" />
+        
+        <!-- Core structure in flatter style -->
+        <circle cx="32" cy="32" r="10" fill="none" stroke="#1B2A41" stroke-width="2" stroke-dasharray="3,3" />
+        
+        <!-- Add some dots inside for texture (flat style) -->
+        <circle cx="28" cy="28" r="2" fill="#FFFFFF" fill-opacity="0.7" />
+        <circle cx="36" cy="36" r="2" fill="#FFFFFF" fill-opacity="0.7" />
+        <circle cx="30" cy="34" r="1.5" fill="#FFFFFF" fill-opacity="0.7" />
     </svg>`,
-    "flask": `<svg viewBox="0 0 24 24" width="100%" height="100%">
-        <path d="M5,19c0,1.1,0.9,2,2,2h10c1.1,0,2-0.9,2-2v-1c0-0.55-0.45-1-1-1h-1.5v-5H18c0.55,0,1-0.45,1-1v-1c0-0.55-0.45-1-1-1h-1.5V5 c0-0.55-0.45-1-1-1h-5c-0.55,0-1,0.45-1,1v4H8c-0.55,0-1,0.45-1,1v1c0,0.55,0.45,1,1,1h1.5v5H8c-0.55,0-1,0.45-1,1V19z M12.5,5.5h1 v2h-1V5.5z M11,5.5v2h-1v-2H11z M9,13.5h6v5H9V13.5z" fill="currentColor"/>
-        <circle cx="12" cy="16" r="1" fill="currentColor"/>
-        <circle cx="10" cy="15" r="0.5" fill="currentColor"/>
-        <circle cx="14" cy="15" r="0.5" fill="currentColor"/>
+    "pipette": `<svg viewBox="0 0 64 64" width="100%" height="100%">
+        <!-- Pipette body -->
+        <rect fill="#E0E0E0" height="32" rx="2" width="12" x="26" y="8" />
+        
+        <!-- Pipette upper part -->
+        <rect fill="#1B2A41" height="10" rx="2" width="16" x="24" y="4" />
+        
+        <!-- Plunger button -->
+        <rect fill="#FF6B6B" height="3" rx="1" width="10" x="27" y="1" />
+        
+        <!-- Tip connector -->
+        <path d="M 30,40 L 26,44 L 38,44 L 34,40 Z" fill="#666666" />
+        
+        <!-- Pipette tip -->
+        <path d="M 28,44 L 26,48 L 26,56 C 26,58 27,58 32,58 C 37,58 38,58 38,56 L 38,48 L 36,44 Z" fill="#E0E0E0" />
+        
+        <!-- Liquid in tip -->
+        <path d="M 28,54 L 28,56 C 28,57 29,57 32,57 C 35,57 36,57 36,56 L 36,54 Z" fill="#4ECDC4" />
+        
+        <!-- Volume markings -->
+        <line stroke="#1B2A41" stroke-width="0.7" x1="38" x2="40" y1="10" y2="10" />
+        <line stroke="#1B2A41" stroke-width="0.7" x1="38" x2="40" y1="15" y2="15" />
+        <line stroke="#1B2A41" stroke-width="0.7" x1="38" x2="40" y1="20" y2="20" />
+        <line stroke="#1B2A41" stroke-width="0.7" x1="38" x2="40" y1="25" y2="25" />
+        <line stroke="#1B2A41" stroke-width="0.7" x1="38" x2="40" y1="30" y2="30" />
+        <line stroke="#1B2A41" stroke-width="0.7" x1="38" x2="40" y1="35" y2="35" />
+        
+        <!-- Highlights and details -->
+        <line stroke="#FFFFFF" stroke-width="1" x1="28" x2="28" y1="10" y2="38" stroke-opacity="0.3" />
     </svg>`,
-    "dna": `<svg viewBox="0 0 24 24" width="100%" height="100%">
-        <path d="M18,20c-0.17,0-0.33-0.09-0.42-0.23c-1.02-1.61-2.83-2.58-4.85-2.68c-1.25-0.07-2.48,0.2-3.47,0.75 c-0.99,0.56-1.83,1.4-2.36,2.38c-0.14,0.27-0.48,0.37-0.74,0.22c-0.27-0.14-0.37-0.48-0.22-0.74c0.63-1.17,1.63-2.15,2.8-2.82 c1.17-0.66,2.63-0.99,4.13-0.9c2.41,0.13,4.54,1.31,5.79,3.21c0.15,0.26,0.05,0.59-0.21,0.74C18.2,19.98,18.1,20,18,20z" fill="currentColor"/>
-        <path d="M6,4c0.17,0,0.33,0.09,0.42,0.23c1.02,1.61,2.83,2.58,4.85,2.68c1.25,0.07,2.48-0.2,3.47-0.75c0.99-0.56,1.83-1.4,2.36-2.38 c0.14-0.27,0.48-0.37,0.74-0.22c0.27,0.14,0.37,0.48,0.22,0.74c-0.63,1.17-1.63,2.15-2.8,2.82c-1.17,0.66-2.63,0.99-4.13,0.9 c-2.41-0.13-4.54-1.31-5.79-3.21C5.64,4.49,5.73,4.16,6,4.01C6.09,4.02,6.09,4,6,4z" fill="currentColor"/>
-        <path d="M14.5,9h-5c-0.28,0-0.5-0.22-0.5-0.5v0c0-0.28,0.22-0.5,0.5-0.5h5c0.28,0,0.5,0.22,0.5,0.5v0C15,8.77,14.78,9,14.5,9z" fill="currentColor"/>
-        <path d="M14.5,11h-5c-0.28,0-0.5-0.22-0.5-0.5v0c0-0.28,0.22-0.5,0.5-0.5h5c0.28,0,0.5,0.22,0.5,0.5v0C15,10.77,14.78,11,14.5,11 z" fill="currentColor"/>
-        <path d="M14.5,13h-5c-0.28,0-0.5-0.22-0.5-0.5v0c0-0.28,0.22-0.5,0.5-0.5h5c0.28,0,0.5,0.22,0.5,0.5v0C15,12.77,14.78,13,14.5,13 z" fill="currentColor"/>
-        <path d="M14.5,15h-5c-0.28,0-0.5-0.22-0.5-0.5v0c0-0.28,0.22-0.5,0.5-0.5h5c0.28,0,0.5,0.22,0.5,0.5v0C15,14.77,14.78,15,14.5,15 z" fill="currentColor"/>
-        <path d="M14.5,17h-5c-0.28,0-0.5-0.22-0.5-0.5v0c0-0.28,0.22-0.5,0.5-0.5h5c0.28,0,0.5,0.22,0.5,0.5v0C15,16.77,14.78,17,14.5,17 z" fill="currentColor"/>
+    "sop-checklist": `<svg viewBox="0 0 64 64" width="100%" height="100%">
+        <rect fill="#E0E0E0" height="44" rx="4" width="32" x="16" y="10" />
+        <rect fill="#1B2A41" height="6" rx="2" width="16" x="24" y="10" />
+        <line stroke="#1B2A41" stroke-width="2" x1="22" x2="42" y1="20" y2="20" />
+        <circle cx="20" cy="20" fill="#4ECDC4" r="2" />
+        <line stroke="#1B2A41" stroke-width="2" x1="22" x2="42" y1="30" y2="30" />
+        <circle cx="20" cy="30" fill="#4ECDC4" r="2" />
+        <line stroke="#1B2A41" stroke-width="2" x1="22" x2="42" y1="40" y2="40" />
+        <circle cx="20" cy="40" fill="#4ECDC4" r="2" />
     </svg>`,
-    "molecule": `<svg viewBox="0 0 24 24" width="100%" height="100%">
-        <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
-        <circle cx="6" cy="6" r="2" fill="currentColor"/>
-        <circle cx="18" cy="6" r="2" fill="currentColor"/>
-        <circle cx="6" cy="18" r="2" fill="currentColor"/>
-        <circle cx="18" cy="18" r="2" fill="currentColor"/>
-        <path d="M12,10.3L6.7,6.7 M12,10.3l5.3-3.6 M12,13.7l-5.3,3.6 M12,13.7l5.3,3.6" stroke="currentColor" stroke-width="1.5" fill="none"/>
+    "cell": `<svg viewBox="0 0 64 64" width="100%" height="100%">
+        <!-- Cell membrane - simplified with solid fill -->
+        <circle cx="32" cy="32" r="28" fill="#B3E5FC" stroke="#1B2A41" stroke-width="1.5" />
+        
+        <!-- Cell nucleus - simplified with solid fill -->
+        <circle cx="32" cy="32" r="12" fill="#FFF176" stroke="#1B2A41" stroke-width="1.2" />
+        
+        <!-- Endoplasmic reticulum - simplified -->
+        <path d="M 20,20 C 15,18 12,22 17,24 C 14,26 18,30 22,27" fill="none" stroke="#FF6B6B" stroke-width="2" />
+        
+        <!-- Mitochondria - simplified -->
+        <ellipse cx="46" cy="20" rx="5" ry="3" fill="#4ECDC4" stroke="#1B2A41" stroke-width="1" />
+        <line x1="41" y1="20" x2="51" y2="20" stroke="#1B2A41" stroke-width="1" />
+        <line x1="43" y1="17.5" x2="43" y2="22.5" stroke="#1B2A41" stroke-width="1" />
+        <line x1="46" y1="17.5" x2="46" y2="22.5" stroke="#1B2A41" stroke-width="1" />
+        <line x1="49" y1="17.5" x2="49" y2="22.5" stroke="#1B2A41" stroke-width="1" />
+        
+        <!-- Golgi apparatus - simplified -->
+        <path d="M 24,46 C 28,44 32,45 36,44" fill="none" stroke="#3949AB" stroke-width="2" />
+        <path d="M 25,48 C 29,46 33,47 37,46" fill="none" stroke="#3949AB" stroke-width="2" />
+        
+        <!-- Lysosomes - simplified -->
+        <circle cx="46" cy="46" r="3" fill="#FF5252" stroke="#1B2A41" stroke-width="1" />
+        <circle cx="18" cy="36" r="2.5" fill="#FF5252" stroke="#1B2A41" stroke-width="1" />
+        
+        <!-- Ribosomes - simplified -->
+        <circle cx="24" cy="28" r="1.5" fill="#673AB7" />
+        <circle cx="41" cy="32" r="1.5" fill="#673AB7" />
+        <circle cx="26" cy="41" r="1.5" fill="#673AB7" />
+    </svg>`,
+    "lfa": `<svg viewBox="0 0 64 64" width="100%" height="100%">
+        <rect fill="#E0E0E0" height="12" rx="3" width="44" x="10" y="26" />
+        <rect fill="#FF6B6B" height="8" width="2" x="20" y="28" />
+        <rect fill="#4ECDC4" height="8" width="2" x="32" y="28" />
+        <line stroke="#1B2A41" stroke-width="2" x1="12" x2="48" y1="20" y2="20" />
+        <polygon fill="#1B2A41" points="48,18 54,20 48,22" />
     </svg>`,
     // Drawing tools
     "line": `<svg viewBox="0 0 24 24" width="100%" height="100%"><path d="M4,20L20,4" stroke="currentColor" stroke-width="2" fill="none"/></svg>`,
@@ -75,6 +162,17 @@ let isDrawing = false;
 let startX = 0;
 let startY = 0;
 let drawingElement = null;
+
+// Resize functionality
+let isResizing = false;
+let currentResizeElement = null;
+let currentResizeHandle = null;
+let originalWidth = 0;
+let originalHeight = 0;
+let originalLeft = 0;
+let originalTop = 0;
+let startResizeX = 0;
+let startResizeY = 0;
 
 // DOM Elements
 const canvas = document.getElementById("editor-canvas");
@@ -312,6 +410,16 @@ function init() {
 function applySVGColor(element, color) {
     if (!element) return;
     
+    // Get tool type to check if it's one of our colored icons
+    const toolType = element.dataset.tool;
+    const coloredIcons = ['dna-helix', 'nanoparticle', 'pipette', 'sop-checklist', 'cell', 'lfa'];
+    
+    // If it's one of our colored icons, don't override the colors
+    if (coloredIcons.includes(toolType)) {
+        return; // Skip color application for our special colored icons
+    }
+    
+    // For other elements, apply the selected color
     // Update all SVG paths, lines, rectangles, circles
     const svgPaths = element.querySelectorAll('path, rect, circle, line, ellipse');
     svgPaths.forEach(path => {
@@ -341,66 +449,55 @@ function applySVGColor(element, color) {
 
 // Function to add a new element to the canvas
 function addElement(x, y, toolType) {
-    elementCounter++;
-    const element = document.createElement('div');
-    
-    // Different class based on if it's a drawing tool or not
-    const drawingTools = ['line', 'arrow', 'rectangle', 'circle'];
-    const isDrawingTool = drawingTools.includes(toolType);
-    
-    element.className = isDrawingTool ? 'drawing-element' : 'draggable-element';
-    element.id = `element-${elementCounter}`;
-    element.innerHTML = svgIcons[toolType];
-    element.dataset.tool = toolType;
-    
-    // Apply color to SVG elements if it's a drawing tool
-    if (isDrawingTool) {
-        applySVGColor(element, currentColor);
+    // Skip if it's a drawing tool - we handle those differently
+    const drawingTools = ['line', 'arrow', 'rectangle', 'circle', 'text'];
+    if (drawingTools.includes(toolType)) {
+        if (toolType === 'text') {
+            addTextElement(x, y);
+        }
+        return;
     }
     
-    // Calculate position (center the element on the click position)
-    const elemWidth = 60;
-    const elemHeight = 60;
+    // Create element container
+    const element = document.createElement('div');
+    element.className = 'draggable-element svg-element';
+    element.dataset.tool = toolType;
+    element.id = `element-${++elementCounter}`;
+    element.style.position = 'absolute';
+    element.style.left = `${x - 50}px`;  // Center the element
+    element.style.top = `${y - 50}px`;
+    element.style.width = '100px';  // Default size
+    element.style.height = '100px';
+    element.style.cursor = 'move';
     
-    // Position element
-    element.style.left = (x - elemWidth / 2) + 'px';
-    element.style.top = (y - elemHeight / 2) + 'px';
+    // Add the SVG icon
+    if (svgIcons[toolType]) {
+        element.innerHTML = svgIcons[toolType];
+    } else {
+        console.warn(`No SVG icon found for tool: ${toolType}`);
+        return;
+    }
     
-    // Add drag and selection handlers
-    element.addEventListener('mousedown', startDrag);
-    element.addEventListener('click', (e) => {
-        selectElement(element);
-        e.stopPropagation(); // Prevent canvas click
-    });
-    
-    // Add right-click context menu for delete
-    element.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-        selectElement(element);
-        
-        // Show a confirmation or directly delete
-        const confirmDelete = confirm('Delete this element?');
-        if (confirmDelete) {
-            const elementToRemove = selectedElement;
-            deselectElement();
-            elementToRemove.remove();
-            updateStatusBar();
-            saveToHistory();
-            showToast('Element deleted');
-        }
-    });
-    
-    // Add to canvas
+    // Add the element to the canvas
     canvas.appendChild(element);
     
-    // Select the new element
+    // Apply default color
+    applySVGColor(element, currentColor);
+    
+    // Add event listeners
+    element.addEventListener('mousedown', startDrag);
+    element.addEventListener('click', (e) => {
+        e.stopPropagation();
+        selectElement(element);
+    });
+    
+    // Select the newly added element
     selectElement(element);
     
-    // Save state
+    // Save to history
     saveToHistory();
     
-    // Update status
-    updateStatusBar(`Added ${toolType}`);
+    return element;
 }
 
 // Function to add a text element
@@ -506,48 +603,69 @@ function applyFormatting(element, format) {
 
 // Function to select an element
 function selectElement(element) {
-    // Clear previous selection
-    deselectElement();
+    // Deselect any previously selected element
+    if (selectedElement && selectedElement !== element) {
+        deselectElement();
+    }
     
-    // Set new selection
+    // Set the new selected element
     selectedElement = element;
-    element.style.outline = '2px solid var(--primary-color)';
-    element.style.outlineOffset = '2px';
+    element.classList.add('selected');
     
-    // Update status
-    updateStatusBar(`Selected: ${element.dataset.tool}`);
+    // Update selected element styling
+    element.style.outline = "2px solid #4361ee";
     
-    // Update formatting controls if it's a text element
+    // Add resizing handles
+    if (!element.querySelector('.resize-handle')) {
+        ['nw', 'ne', 'se', 'sw'].forEach(position => {
+            const handle = document.createElement('div');
+            handle.className = `resize-handle ${position}`;
+            handle.style.position = 'absolute';
+            handle.style.width = '8px';
+            handle.style.height = '8px';
+            handle.style.backgroundColor = '#4361ee';
+            handle.style.borderRadius = '50%';
+            handle.style.cursor = position + '-resize';
+            
+            // Position the handle
+            if (position.includes('n')) handle.style.top = '-4px';
+            if (position.includes('s')) handle.style.bottom = '-4px';
+            if (position.includes('w')) handle.style.left = '-4px';
+            if (position.includes('e')) handle.style.right = '-4px';
+            
+            // Add resize event listeners
+            handle.addEventListener('mousedown', startResize);
+            
+            element.appendChild(handle);
+        });
+    }
+    
+    // Update status bar
+    updateStatusBar();
+    
+    // Update format buttons to reflect text element formatting
     if (element.classList.contains('text-element')) {
-        // Update font selector
-        const fontSelect = document.getElementById('font-select');
-        if (element.style.fontFamily) {
-            // Try to find and select the current font
-            for (let i = 0; i < fontSelect.options.length; i++) {
-                if (fontSelect.options[i].value === element.style.fontFamily) {
-                    fontSelect.selectedIndex = i;
-                    break;
-                }
-            }
-        }
-        
-        // Update font size selector
-        const fontSizeSelect = document.getElementById('font-size');
-        if (element.style.fontSize) {
-            const size = parseInt(element.style.fontSize);
-            // Try to find and select the current size
-            for (let i = 0; i < fontSizeSelect.options.length; i++) {
-                if (parseInt(fontSizeSelect.options[i].value) === size) {
-                    fontSizeSelect.selectedIndex = i;
-                    break;
-                }
-            }
-        }
+        const fontSize = parseFloat(window.getComputedStyle(element).fontSize);
+        document.getElementById('font-size').value = Math.round(fontSize);
+        document.getElementById('font-select').value = window.getComputedStyle(element).fontFamily.replace(/"/g, '').replace(/^"|"$/g, '');
         
         // Update format buttons
-        document.getElementById('bold-btn').classList.toggle('active', element.style.fontWeight === 'bold');
-        document.getElementById('italic-btn').classList.toggle('active', element.style.fontStyle === 'italic');
-        document.getElementById('underline-btn').classList.toggle('active', element.style.textDecoration === 'underline');
+        document.getElementById('bold-btn').classList.toggle('active', window.getComputedStyle(element).fontWeight > 400);
+        document.getElementById('italic-btn').classList.toggle('active', window.getComputedStyle(element).fontStyle === 'italic');
+        document.getElementById('underline-btn').classList.toggle('active', window.getComputedStyle(element).textDecoration.includes('underline'));
+    }
+    
+    // If it's an SVG element update color picker
+    if (element.classList.contains('svg-element')) {
+        // Get the SVG fill color
+        const svgElement = element.querySelector('svg');
+        const paths = svgElement.querySelectorAll('path, circle, rect, polygon, line');
+        if (paths.length > 0) {
+            const currentColorEl = paths[0].getAttribute('fill') || paths[0].getAttribute('stroke');
+            if (currentColorEl && currentColorEl !== 'none' && currentColorEl !== 'currentColor') {
+                document.getElementById('color-picker').value = currentColorEl;
+            }
+        }
     }
 }
 
@@ -555,6 +673,13 @@ function selectElement(element) {
 function deselectElement() {
     if (selectedElement) {
         selectedElement.style.outline = 'none';
+        selectedElement.style.outlineOffset = '0';
+        selectedElement.classList.remove('selected');
+        
+        // Remove all resize handles
+        const handles = selectedElement.querySelectorAll('.resize-handle');
+        handles.forEach(handle => handle.remove());
+        
         selectedElement = null;
         updateStatusBar();
     }
@@ -607,22 +732,98 @@ function drag(e) {
 }
 
 function stopDrag() {
-    if (isDragging) {
+    if (isDragging && currentDragElement) {
         isDragging = false;
+        currentDragElement = null;
+        document.removeEventListener('mousemove', drag);
+        document.removeEventListener('mouseup', stopDrag);
+        
+        // Save to history when drag ends
         saveToHistory();
     }
+}
+
+// Resize functionality
+function startResize(e) {
+    e.preventDefault();
+    e.stopPropagation();
     
-    currentDragElement = null;
-    
-    // Remove document event listeners
-    document.removeEventListener('mousemove', drag);
-    document.removeEventListener('mouseup', stopDrag);
-    
-    // Update status
     if (selectedElement) {
-        updateStatusBar(`Selected: ${selectedElement.dataset.tool}`);
-    } else {
-        updateStatusBar();
+        isResizing = true;
+        currentResizeElement = selectedElement;
+        currentResizeHandle = e.target.className.split(' ')[1]; // Get the position (nw, ne, se, sw)
+        
+        // Store original dimensions and position
+        const rect = currentResizeElement.getBoundingClientRect();
+        originalWidth = rect.width;
+        originalHeight = rect.height;
+        originalLeft = rect.left;
+        originalTop = rect.top;
+        
+        // Store starting mouse position
+        startResizeX = e.clientX;
+        startResizeY = e.clientY;
+        
+        // Add event listeners for resize
+        document.addEventListener('mousemove', resize);
+        document.addEventListener('mouseup', stopResize);
+    }
+}
+
+function resize(e) {
+    if (!isResizing || !currentResizeElement) return;
+    
+    e.preventDefault();
+    
+    // Calculate mouse movement
+    const deltaX = e.clientX - startResizeX;
+    const deltaY = e.clientY - startResizeY;
+    
+    let newWidth = originalWidth;
+    let newHeight = originalHeight;
+    let newLeft = currentResizeElement.offsetLeft;
+    let newTop = currentResizeElement.offsetTop;
+    
+    // Resize based on which handle is being dragged
+    if (currentResizeHandle.includes('e')) {
+        newWidth = originalWidth + deltaX;
+    }
+    if (currentResizeHandle.includes('w')) {
+        newWidth = originalWidth - deltaX;
+        newLeft = originalLeft + deltaX;
+    }
+    if (currentResizeHandle.includes('s')) {
+        newHeight = originalHeight + deltaY;
+    }
+    if (currentResizeHandle.includes('n')) {
+        newHeight = originalHeight - deltaY;
+        newTop = originalTop + deltaY;
+    }
+    
+    // Apply minimum size
+    newWidth = Math.max(30, newWidth);
+    newHeight = Math.max(30, newHeight);
+    
+    // Apply the new size and position
+    currentResizeElement.style.width = `${newWidth}px`;
+    currentResizeElement.style.height = `${newHeight}px`;
+    currentResizeElement.style.left = `${newLeft}px`;
+    currentResizeElement.style.top = `${newTop}px`;
+    
+    // Update status bar
+    updateStatusBar(`Resizing: ${Math.round(newWidth)} × ${Math.round(newHeight)}`);
+}
+
+function stopResize() {
+    if (isResizing) {
+        isResizing = false;
+        currentResizeElement = null;
+        currentResizeHandle = null;
+        document.removeEventListener('mousemove', resize);
+        document.removeEventListener('mouseup', stopResize);
+        
+        // Save to history when resize ends
+        saveToHistory();
     }
 }
 
@@ -963,9 +1164,12 @@ function showToast(message, duration = 2000) {
 // Update status bar
 function updateStatusBar(message) {
     if (message) {
-        statusBar.textContent = message + ' | Canvas: 800 × 600 px' + (canvasScale !== 1 ? ` | Zoom: ${Math.round(canvasScale * 100)}%` : '');
+        statusBar.textContent = message;
+    } else if (selectedElement) {
+        const rect = selectedElement.getBoundingClientRect();
+        statusBar.textContent = `Selected: ${selectedElement.dataset.tool} | Size: ${Math.round(rect.width)} × ${Math.round(rect.height)} px`;
     } else {
-        statusBar.textContent = 'Ready | Canvas: 800 × 600 px | Tool: ' + currentTool + (canvasScale !== 1 ? ` | Zoom: ${Math.round(canvasScale * 100)}%` : '');
+        statusBar.textContent = `Ready | Canvas: ${canvas.clientWidth} × ${canvas.clientHeight} px | Selected: None`;
     }
 }
 

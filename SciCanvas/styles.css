@@ -196,6 +196,110 @@ body {
     stroke: var(--icon-color);
 }
 
+/* Preserve original colors for SVG elements with explicit color attributes */
+.sidebar-btn svg [fill="#E0E0E0"],
+.sidebar-btn svg [fill="#FF6B6B"],
+.sidebar-btn svg [fill="#4ECDC4"],
+.sidebar-btn svg [fill="#1B2A41"] {
+    fill: attr(fill);
+}
+
+.sidebar-btn svg [stroke="#1B2A41"],
+.sidebar-btn svg [stroke="#FF6B6B"] {
+    stroke: attr(stroke);
+}
+
+/* Override for new colored SVG icons */
+.sidebar-btn[data-tool="dna-helix"] svg line,
+.sidebar-btn[data-tool="nanoparticle"] svg circle,
+.sidebar-btn[data-tool="pipette"] svg rect,
+.sidebar-btn[data-tool="pipette"] svg polygon,
+.sidebar-btn[data-tool="pipette"] svg circle,
+.sidebar-btn[data-tool="sop-checklist"] svg rect,
+.sidebar-btn[data-tool="sop-checklist"] svg line,
+.sidebar-btn[data-tool="sop-checklist"] svg circle,
+.sidebar-btn[data-tool="lfa"] svg rect,
+.sidebar-btn[data-tool="lfa"] svg line,
+.sidebar-btn[data-tool="lfa"] svg polygon {
+    fill: unset !important;
+    stroke: unset !important;
+}
+
+/* Restore the original colors for our custom icons */
+.sidebar-btn[data-tool="dna-helix"] svg line[stroke="#1B2A41"],
+.sidebar-btn[data-tool="lfa"] svg line[stroke="#1B2A41"],
+.sidebar-btn[data-tool="sop-checklist"] svg line[stroke="#1B2A41"],
+.sidebar-btn[data-tool="cell"] svg circle[stroke="#1B2A41"],
+.sidebar-btn[data-tool="cell"] svg ellipse[stroke="#1B2A41"],
+.sidebar-btn[data-tool="nanoparticle"] svg circle[stroke="#1B2A41"],
+.sidebar-btn[data-tool="nanoparticle"] svg line[stroke="#1B2A41"] {
+    stroke: #1B2A41 !important;
+}
+
+.sidebar-btn[data-tool="dna-helix"] svg line[stroke="#FF6B6B"],
+.sidebar-btn[data-tool="cell"] svg path[stroke="#FF6B6B"],
+.sidebar-btn[data-tool="nanoparticle"] svg line[stroke="#FF6B6B"] {
+    stroke: #FF6B6B !important;
+}
+
+.sidebar-btn[data-tool="lfa"] svg rect[fill="#E0E0E0"],
+.sidebar-btn[data-tool="sop-checklist"] svg rect[fill="#E0E0E0"],
+.sidebar-btn[data-tool="pipette"] svg rect[fill="#E0E0E0"],
+.sidebar-btn[data-tool="pipette"] svg path[fill="#E0E0E0"] {
+    fill: #E0E0E0 !important;
+}
+
+.sidebar-btn[data-tool="lfa"] svg rect[fill="#FF6B6B"],
+.sidebar-btn[data-tool="pipette"] svg polygon[fill="#FF6B6B"],
+.sidebar-btn[data-tool="pipette"] svg rect[fill="#FF6B6B"],
+.sidebar-btn[data-tool="nanoparticle"] svg circle[fill="#FF6B6B"] {
+    fill: #FF6B6B !important;
+}
+
+.sidebar-btn[data-tool="lfa"] svg rect[fill="#4ECDC4"],
+.sidebar-btn[data-tool="pipette"] svg circle[fill="#4ECDC4"],
+.sidebar-btn[data-tool="pipette"] svg path[fill="#4ECDC4"],
+.sidebar-btn[data-tool="nanoparticle"] svg circle[fill="#4ECDC4"],
+.sidebar-btn[data-tool="sop-checklist"] svg circle[fill="#4ECDC4"],
+.sidebar-btn[data-tool="cell"] svg ellipse[fill="#4ECDC4"] {
+    fill: #4ECDC4 !important;
+}
+
+.sidebar-btn[data-tool="nanoparticle"] svg circle[fill="#4ECDC4"]:first-of-type {
+    fill: #4ECDC4 !important;
+}
+
+.sidebar-btn[data-tool="lfa"] svg polygon[fill="#1B2A41"],
+.sidebar-btn[data-tool="pipette"] svg rect[fill="#1B2A41"],
+.sidebar-btn[data-tool="sop-checklist"] svg rect[fill="#1B2A41"] {
+    fill: #1B2A41 !important;
+}
+
+.sidebar-btn[data-tool="cell"] svg circle[fill="#B3E5FC"] {
+    fill: #B3E5FC !important;
+}
+
+.sidebar-btn[data-tool="cell"] svg circle[fill="#FFF176"] {
+    fill: #FFF176 !important;
+}
+
+.sidebar-btn[data-tool="cell"] svg circle[fill="#FF5252"] {
+    fill: #FF5252 !important;
+}
+
+.sidebar-btn[data-tool="cell"] svg circle[fill="#673AB7"] {
+    fill: #673AB7 !important;
+}
+
+.sidebar-btn[data-tool="pipette"] svg path[fill="#666666"] {
+    fill: #666666 !important;
+}
+
+.sidebar-btn[data-tool="nanoparticle"] svg circle[fill="#FFFFFF"] {
+    fill: #FFFFFF !important;
+    fill-opacity: 0.7 !important;
+}
+
 .sidebar-btn svg [fill="currentColor"] {
     fill: var(--icon-color);
 }
@@ -365,6 +469,45 @@ body {
 .drawing-element.selected {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
+}
+
+/* Element when selected */
+.selected {
+    position: relative; /* Ensure position is set for handle positioning */
+}
+
+/* Resize handles */
+.resize-handle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    z-index: 10;
+}
+
+.resize-handle.nw {
+    top: -4px;
+    left: -4px;
+    cursor: nw-resize;
+}
+
+.resize-handle.ne {
+    top: -4px;
+    right: -4px;
+    cursor: ne-resize;
+}
+
+.resize-handle.se {
+    bottom: -4px;
+    right: -4px;
+    cursor: se-resize;
+}
+
+.resize-handle.sw {
+    bottom: -4px;
+    left: -4px;
+    cursor: sw-resize;
 }
 
 /* Fix for arrow elements specifically */
