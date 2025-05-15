@@ -1551,26 +1551,72 @@ function generateRecommendations(design) {
     return recommendations.join(" ");
 }
 
-// Functions for action buttons
+// Check if user is authorized for operations that require authentication
+function isUserAuthorized() {
+    // In a real app, this would check for a valid auth token
+    // For now, we'll implement a basic check that would be replaced with proper auth
+    const userToken = localStorage.getItem('user_token');
+    return !!userToken;
+}
+
+// Prompt user to log in
+function promptLogin() {
+    const confirmed = confirm('You need to be logged in to perform this action. Would you like to log in now?');
+    if (confirmed) {
+        // In a real app, this would redirect to a login page
+        alert('This would redirect to a login page in a real application.');
+        return false;
+    }
+    return false;
+}
+
 function saveDesign() {
-    // Create a design object to save
-    const designToSave = JSON.parse(JSON.stringify(currentDesign));
-    
-    // Add timestamp and name
-    designToSave.timestamp = new Date().toISOString();
-    designToSave.name = prompt("Enter a name for this design:", "My Nanoparticle Design");
-    
-    if (!designToSave.name) return; // User cancelled
-    
-    // Save to localStorage
-    let savedDesigns = JSON.parse(localStorage.getItem('nanoforgeDesigns') || '[]');
-    savedDesigns.push(designToSave);
-    localStorage.setItem('nanoforgeDesigns', JSON.stringify(savedDesigns));
-    
-    alert("Design saved successfully!");
+    // Check if user is authorized
+    if (!isUserAuthorized()) {
+        return promptLogin();
+    }
+
+    const designName = prompt('Enter a name for this design:', 'My Nanoparticle Design');
+    if (!designName) return;
+
+    // Sanitize the design name
+    const sanitizedName = designName.replace(/[<>]/g, '');
+
+    // Continue with original saveDesign functionality
+    const design = {
+        name: sanitizedName,
+        timestamp: new Date().toISOString(),
+        core: { ...currentDesign.core },
+        layers: [...currentDesign.layers],
+        environment: { ...currentDesign.environment },
+        properties: {
+            hydroDiameter: calculateHydrodynamicDiameter(currentDesign),
+            zetaPotential: calculateZetaPotential(currentDesign),
+            aggregationPotential: calculateAggregationPotential(currentDesign),
+            surfaceCoverage: currentDesign.layers.length > 0 ? '92%' : '0%'
+        }
+    };
+
+    // In a real app, this would save to a database
+    // For now, store in localStorage
+    try {
+        const savedDesigns = JSON.parse(localStorage.getItem('nanoforgeDesigns') || '[]');
+        savedDesigns.push(design);
+        localStorage.setItem('nanoforgeDesigns', JSON.stringify(savedDesigns));
+        
+        alert(`Design "${sanitizedName}" saved successfully!`);
+    } catch (error) {
+        console.error('Error saving design:', error);
+        alert('There was an error saving your design. Please try again.');
+    }
 }
 
 function exportData() {
+    // Check if user is authorized
+    if (!isUserAuthorized()) {
+        return promptLogin();
+    }
+
     // Create export data with current design and calculated properties
     const exportData = {
         design: JSON.parse(JSON.stringify(currentDesign)),
@@ -1591,33 +1637,59 @@ function exportData() {
     
     const modalHeader = document.createElement('div');
     modalHeader.className = 'modal-header';
-    modalHeader.innerHTML = `
-        <h3>Export Options</h3>
-        <span class="close">&times;</span>
-    `;
+    
+    // Sanitize content before adding to innerHTML
+    const headerHTML = document.createElement('div');
+    const headerTitle = document.createElement('h3');
+    headerTitle.textContent = 'Export Options';
+    headerHTML.appendChild(headerTitle);
+    
+    const closeSpan = document.createElement('span');
+    closeSpan.className = 'close';
+    closeSpan.innerHTML = '&times;';
+    headerHTML.appendChild(closeSpan);
+    
+    modalHeader.appendChild(headerHTML);
     
     const modalBody = document.createElement('div');
     modalBody.className = 'modal-body';
-    modalBody.innerHTML = `
-        <p>Choose export format:</p>
-        <div class="export-options">
-            <button class="btn btn-secondary export-btn" data-format="json">
-                <i class="fas fa-file-code"></i> JSON
-            </button>
-            <button class="btn btn-secondary export-btn" data-format="csv">
-                <i class="fas fa-file-csv"></i> CSV
-            </button>
-            <button class="btn btn-secondary export-btn" data-format="pdf">
-                <i class="fas fa-file-pdf"></i> PDF Report
-            </button>
-        </div>
-    `;
+    
+    const modalBodyContent = document.createElement('div');
+    
+    const formatText = document.createElement('p');
+    formatText.textContent = 'Choose export format:';
+    modalBodyContent.appendChild(formatText);
+    
+    const exportOptions = document.createElement('div');
+    exportOptions.className = 'export-options';
+    
+    // Create export buttons safely
+    ['json', 'csv', 'pdf'].forEach(format => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-secondary export-btn';
+        btn.setAttribute('data-format', format);
+        
+        const icon = document.createElement('i');
+        icon.className = `fas fa-file-${format === 'json' ? 'code' : format}`;
+        btn.appendChild(icon);
+        
+        const text = document.createTextNode(` ${format.toUpperCase()}`);
+        btn.appendChild(text);
+        
+        exportOptions.appendChild(btn);
+    });
+    
+    modalBodyContent.appendChild(exportOptions);
+    modalBody.appendChild(modalBodyContent);
     
     const modalFooter = document.createElement('div');
     modalFooter.className = 'modal-footer';
-    modalFooter.innerHTML = `
-        <button id="cancelExportBtn" class="btn btn-secondary">Cancel</button>
-    `;
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.id = 'cancelExportBtn';
+    cancelBtn.className = 'btn btn-secondary';
+    cancelBtn.textContent = 'Cancel';
+    modalFooter.appendChild(cancelBtn);
     
     modalContent.appendChild(modalHeader);
     modalContent.appendChild(modalBody);
@@ -1628,11 +1700,11 @@ function exportData() {
     
     // Add event listeners
     const closeBtn = exportModal.querySelector('.close');
-    const cancelBtn = exportModal.querySelector('#cancelExportBtn');
+    const cancelBtnEl = exportModal.querySelector('#cancelExportBtn');
     const exportBtns = exportModal.querySelectorAll('.export-btn');
     
     closeBtn.addEventListener('click', closeExportModal);
-    cancelBtn.addEventListener('click', closeExportModal);
+    cancelBtnEl.addEventListener('click', closeExportModal);
     
     exportBtns.forEach(btn => {
         btn.addEventListener('click', function() {
@@ -1655,7 +1727,9 @@ function exportData() {
     });
     
     function closeExportModal() {
-        document.body.removeChild(exportModal);
+        if (document.body.contains(exportModal)) {
+            document.body.removeChild(exportModal);
+        }
     }
 }
 
