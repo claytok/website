@@ -57,30 +57,6 @@ const templates = {
     // Removing the templates as requested
 };
 
-// Helper function to safely sanitize HTML content
-function sanitizeHTML(content) {
-    // If DOMPurify is available, use it
-    if (typeof DOMPurify !== 'undefined') {
-        return DOMPurify.sanitize(content);
-    }
-    
-    // Basic fallback sanitization for when DOMPurify isn't available
-    // This is not a complete sanitizer but provides basic protection
-    const doc = new DOMParser().parseFromString(content, 'text/html');
-    const scripts = doc.querySelectorAll('script');
-    scripts.forEach(script => script.remove());
-    
-    const onEventAttrs = doc.querySelectorAll('[onclick], [onload], [onerror], [onmouseover]');
-    onEventAttrs.forEach(el => {
-        el.removeAttribute('onclick');
-        el.removeAttribute('onload');
-        el.removeAttribute('onerror');
-        el.removeAttribute('onmouseover');
-    });
-    
-    return doc.body.innerHTML;
-}
-
 // State variables
 let currentTool = "microscope";
 let isDragging = false;
@@ -483,14 +459,21 @@ function addTextElement(x, y) {
 
 // Function to make text editable
 function makeTextEditable(element) {
-    element.setAttribute('contenteditable', 'true');
+    element.contentEditable = true;
     element.focus();
     
-    // Sanitize content when editing is complete
-    element.addEventListener('blur', function() {
-        const sanitizedContent = sanitizeHTML(element.innerHTML);
-        element.innerHTML = sanitizedContent;
-    });
+    // Select all text
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    
+    // Save when focus is lost
+    element.addEventListener('blur', () => {
+        element.contentEditable = false;
+        saveToHistory();
+    }, { once: true });
 }
 
 // Function to apply formatting to text
@@ -937,8 +920,7 @@ function exportAsPNG() {
 // Function to save project (simplified without actual file saving)
 function saveProject() {
     // In a real app, this would save to a server or local storage
-    const sanitizedContent = sanitizeHTML(canvas.innerHTML);
-    localStorage.setItem('scicanvas-project', sanitizedContent);
+    localStorage.setItem('scicanvas-project', canvas.innerHTML);
     showToast('Project saved to local storage');
 }
 
@@ -947,8 +929,7 @@ function saveProjectAs() {
     // In a real app, this would prompt for a filename
     const projectName = prompt('Enter project name:', 'scicanvas-project');
     if (projectName) {
-        const sanitizedContent = sanitizeHTML(canvas.innerHTML);
-        localStorage.setItem(`scicanvas-${projectName}`, sanitizedContent);
+        localStorage.setItem(`scicanvas-${projectName}`, canvas.innerHTML);
         showToast(`Project saved as "${projectName}"`);
     }
 }
@@ -959,8 +940,7 @@ function openProject() {
     const projectData = localStorage.getItem('scicanvas-project');
     if (projectData) {
         if (confirm('Load saved project? Current changes will be lost.')) {
-            const sanitizedContent = sanitizeHTML(projectData);
-            canvas.innerHTML = sanitizedContent;
+            canvas.innerHTML = projectData;
             reattachEventListeners();
             saveToHistory();
             showToast('Project loaded from local storage');
