@@ -28,14 +28,17 @@ function App() {
     setLastSequence(sequence);
     setLastSampleType(sampleType);
     
-    // Clear previous results before generating new ones
+    // Clean previous results before generating new ones
     setResults(null);
+    
+    // Sanitize user input
+    const sanitizedSequence = sanitizeHTML(seq);
     
     // Small delay to ensure the UI updates and shows the loading state
     setTimeout(() => {
       try {
         // Clean sequence
-        const cleanSequence = seq.toUpperCase().replace(/[^ATGC]/g, '');
+        const cleanSequence = sanitizedSequence.toUpperCase().replace(/[^ATGC]/g, '');
         
         // Check if sequence is long enough for real design
         if (cleanSequence.length < 200) {
@@ -316,11 +319,29 @@ function App() {
 
   // Helper functions
   function simpleHash(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = (hash + str.charCodeAt(i) * (i + 1)) % 1000;
+    if (!str) return 0;
+    
+    // Convert string to an array of character codes
+    const data = new TextEncoder().encode(str);
+    
+    // A more secure hashing approach
+    let h1 = 0xdeadbeef;
+    let h2 = 0x41c6ce57;
+    
+    for (let i = 0; i < data.length; i++) {
+      const byte = data[i];
+      h1 = Math.imul(h1 ^ byte, 2654435761);
+      h2 = Math.imul(h2 ^ byte, 1597334677);
     }
-    return hash;
+    
+    h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+    h1 = Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+    
+    h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+    h2 = Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+    
+    // Combine the two 32-bit hashes and ensure it's a positive integer
+    return 4294967296 * (2097151 & h2) + (h1 >>> 0);
   }
   
   // Example primer sequences for known organisms
@@ -446,6 +467,28 @@ function App() {
     };
     
     return types[sampleType] || 'samples';
+  }
+
+  // This function sanitizes user input before displaying it in the UI
+  function sanitizeHTML(text) {
+    if (typeof document !== 'undefined') {
+      const element = document.createElement('div');
+      element.textContent = text;
+      return element.innerHTML;
+    }
+    return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // Generate a secure random number for cryptographically sensitive operations
+  function secureRandom() {
+    if (typeof window !== 'undefined' && window.crypto) {
+      const array = new Uint32Array(1);
+      window.crypto.getRandomValues(array);
+      return array[0] / (0xffffffff + 1);
+    }
+    // Fallback to Math.random() only if crypto API is not available
+    console.warn('Crypto API not available, falling back to insecure Math.random()');
+    return Math.random();
   }
 
   return (
