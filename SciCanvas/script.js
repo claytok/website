@@ -938,6 +938,15 @@ function reattachEventListeners() {
 
 // Clear the canvas of all elements
 function clearCanvas() {
+    // First remove any stray markers that might be in the DOM
+    const defs = document.querySelectorAll('defs');
+    defs.forEach(def => {
+        if (def.parentNode === document.body || def.parentNode.parentNode === document.body) {
+            def.parentNode.remove();
+        }
+    });
+
+    // Clear canvas content
     while (canvas.firstChild) {
         canvas.removeChild(canvas.firstChild);
     }
@@ -1210,22 +1219,27 @@ function startDrawing(e) {
         startY = (e.clientY - rect.top) / canvasScale;
         
         // Create drawing element
-        elementCounter++;
         drawingElement = document.createElement('div');
         drawingElement.className = 'drawing-element';
-        drawingElement.id = `element-${elementCounter}`;
+        drawingElement.id = `element-${++elementCounter}`;
         drawingElement.dataset.tool = currentTool;
         
+        // Position at start point with minimal size initially
+        drawingElement.style.left = startX + 'px';
+        drawingElement.style.top = startY + 'px';
+        
+        // For arrows, ensure minimal dimensions to avoid the "floating arrowhead" issue
+        if (currentTool === 'arrow') {
+            drawingElement.style.width = '10px';
+            drawingElement.style.height = '10px';
+        }
+        
         // Add SVG container based on tool type
-        const svgContent = createSVGForDrawing(currentTool, 0, 0);
+        const svgContent = createSVGForDrawing(currentTool, 10, 10);
         drawingElement.innerHTML = svgContent;
         
         // Set color
         applySVGColor(drawingElement, currentColor);
-        
-        // Set initial position
-        drawingElement.style.left = startX + 'px';
-        drawingElement.style.top = startY + 'px';
         
         // Add to canvas
         canvas.appendChild(drawingElement);
@@ -1319,8 +1333,11 @@ function createSVGForDrawing(tool, width, height) {
     const w = Math.max(width, 10);
     const h = Math.max(height, 10);
     
-    // Create unique ID for markers with complete randomness to prevent DOM conflicts
-    const markerId = `arrowhead-${Date.now()}-${Math.floor(Math.random() * 10000000)}`;
+    // Create fully unique ID for markers with namespace to prevent SVG marker bleeding
+    const uniqueTime = Date.now();
+    const uniqueRandom = Math.floor(Math.random() * 10000000);
+    const uniqueCounter = ++elementCounter;
+    const markerId = `arrow-${uniqueTime}-${uniqueRandom}-${uniqueCounter}`;
     
     switch (tool) {
         case 'line':

@@ -576,6 +576,11 @@ body {
     z-index: 6;
 }
 
+/* Fix marker isolation - ensure markers stay with their parent SVGs */
+svg {
+    isolation: isolate;
+}
+
 /* Ensure SVG elements are properly clickable */
 .draggable-element svg, 
 .drawing-element svg {
@@ -586,6 +591,13 @@ body {
 /* Fix marker display issues */
 .drawing-element svg marker {
     overflow: visible;
+}
+
+/* Prevent marker rendering outside their context */
+body > svg, 
+body > marker,
+body > defs {
+    display: none !important;
 }
 
 /* Remove unused placeholder elements to prevent visual artifacts */
