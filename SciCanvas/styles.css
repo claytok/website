@@ -455,20 +455,24 @@ body {
 /* Drawing elements */
 .drawing-element {
     position: absolute;
-    z-index: 5;
     cursor: move;
-    /* Ensure the element is interactive */
-    pointer-events: all;
+    border: 1px solid transparent;
+    z-index: 10;
 }
 
 .drawing-element svg {
-    /* Make sure SVG allows interaction */
-    pointer-events: all;
+    width: 100%;
+    height: 100%;
+}
+
+/* Ensure marker elements in SVG don't get overridden by default styles */
+.drawing-element svg marker polygon {
+    fill: inherit;
 }
 
 .drawing-element.selected {
-    outline: 2px solid var(--primary-color);
-    outline-offset: 2px;
+    border: 1px solid #4a86e8;
+    box-shadow: 0 0 5px rgba(74, 134, 232, 0.5);
 }
 
 /* Element when selected */
@@ -548,4 +552,20 @@ body {
 
 .toolbar-btn:disabled svg {
     fill: #9e9e9e;
+}
+
+/* Fix for arrow elements and other drawing tools in the canvas */
+.drawing-element[data-tool="arrow"] svg line,
+.drawing-element[data-tool="line"] svg line {
+    stroke-linecap: round;
+}
+
+.drawing-element[data-tool="arrow"] svg marker polygon {
+    fill-opacity: 1 !important;
+}
+
+.drawing-element[data-tool="rectangle"] svg rect,
+.drawing-element[data-tool="circle"] svg ellipse {
+    stroke-width: 2px;
+    vector-effect: non-scaling-stroke;
 }

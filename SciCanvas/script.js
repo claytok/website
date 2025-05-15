@@ -1333,7 +1333,7 @@ function createSVGForDrawing(tool, width, height) {
     const h = Math.max(height, 10);
     
     // Create unique ID for markers
-    const markerId = `arrowhead-${elementCounter}`;
+    const markerId = `arrowhead-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     
     switch (tool) {
         case 'line':
@@ -1344,13 +1344,11 @@ function createSVGForDrawing(tool, width, height) {
             return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
                       <defs>
                         <marker id="${markerId}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-                          <polygon points="0 0, 10 3.5, 0 7" fill="${currentColor}" stroke="none"/>
+                          <polygon points="0 0, 10 3.5, 0 7" fill="${currentColor}"/>
                         </marker>
                       </defs>
-                      <line x1="0" y1="0" x2="${w-1}" y2="${h-1}" stroke="${currentColor}" stroke-width="2" 
-                            marker-end="url(#${markerId})" fill="none"/>
-                      <!-- Invisible rect to make clicking easier -->
-                      <rect x="0" y="0" width="${w}" height="${h}" fill="transparent" stroke="transparent" pointer-events="all"/>
+                      <line x1="0" y1="0" x2="${w-10}" y2="${h-10}" stroke="${currentColor}" stroke-width="2" 
+                            marker-end="url(#${markerId})"/>
                     </svg>`;
         case 'rectangle':
             return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%">
@@ -1413,8 +1411,8 @@ function updateDrawingSVG(element, tool, width, height, isRightDirection, isDown
         case 'arrow':
             const arrow = svg.querySelector('line');
             if (arrow) {
-                // Adjust endpoint slightly to avoid overlap with arrowhead
-                const endAdjust = 1;
+                // Adjust endpoint to prevent overlap with arrowhead
+                const endAdjust = 10;
                 if (isRightDirection && isDownDirection) {
                     arrow.setAttribute('x1', '0');
                     arrow.setAttribute('y1', '0');
@@ -1437,16 +1435,20 @@ function updateDrawingSVG(element, tool, width, height, isRightDirection, isDown
                     arrow.setAttribute('y2', endAdjust);
                 }
                 
-                // Update arrow marker orientation
+                // Update marker - ensure it's using current color and has correct orientation
                 const marker = svg.querySelector('marker');
                 if (marker) {
                     let orient = "auto";
-                    if (isRightDirection && isDownDirection) orient = "auto";
-                    else if (!isRightDirection && isDownDirection) orient = "auto-start-reverse";
-                    else if (isRightDirection && !isDownDirection) orient = "auto";
-                    else orient = "auto-start-reverse";
-                    
+                    if (!isRightDirection) {
+                        orient = "auto-start-reverse";
+                    }
                     marker.setAttribute('orient', orient);
+                    
+                    // Make sure the polygon fill is the same as the line
+                    const polygon = marker.querySelector('polygon');
+                    if (polygon) {
+                        polygon.setAttribute('fill', arrow.getAttribute('stroke'));
+                    }
                 }
             }
             break;
