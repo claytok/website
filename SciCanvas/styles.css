@@ -569,3 +569,33 @@ body {
     stroke-width: 2px;
     vector-effect: non-scaling-stroke;
 }
+
+/* Fix for arrow elements */
+.drawing-element[data-tool="arrow"] {
+    pointer-events: all;
+    z-index: 6;
+}
+
+/* Ensure SVG elements are properly clickable */
+.draggable-element svg, 
+.drawing-element svg {
+    pointer-events: all;
+    overflow: visible; /* Allow marker to overflow SVG bounds */
+}
+
+/* Fix marker display issues */
+.drawing-element svg marker {
+    overflow: visible;
+}
+
+/* Remove unused placeholder elements to prevent visual artifacts */
+.drawing-element svg:not(:first-child) {
+    display: none;
+}
+
+/* Make small elements easier to interact with */
+.drawing-element[data-tool="arrow"],
+.drawing-element[data-tool="line"] {
+    min-width: 15px;
+    min-height: 15px;
+}
