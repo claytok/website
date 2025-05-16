@@ -1054,8 +1054,8 @@ function initThreeJS() {
         document.getElementById('nanoparticleCanvas').clientHeight
     );
     
-    // Enable clipping planes for the renderer
-    renderer.localClippingEnabled = true;
+    // Disable clipping planes - we're removing this feature
+    renderer.localClippingEnabled = false;
     
     // Initialize default clipping plane (disabled by default)
     clippingPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
@@ -1149,6 +1149,9 @@ function createNanoparticle() {
             clipHelperPlane = null;
         }
         
+        // Force clipping to be disabled - we're removing this feature for now
+        clippingEnabled = false;
+        
         // Create a new group for the nanoparticle
         nanoparticle = new THREE.Group();
         
@@ -1162,9 +1165,7 @@ function createNanoparticle() {
             color: materialProperties.core[currentDesign.core.material].color,
             shininess: 60,
             transparent: true,
-            opacity: 0.9,
-            // Add clipping planes if enabled
-            clippingPlanes: clippingEnabled ? [clippingPlane] : []
+            opacity: 0.9
         });
         
         const core = new THREE.Mesh(coreGeometry, coreMaterial);
@@ -2144,12 +2145,12 @@ function addClippingPlaneHelper() {
     // Create a plane geometry parallel to the clipping plane
     const helperGeo = new THREE.PlaneGeometry(size, size);
     
-    // Create a much more transparent material for the helper
+    // Create a more transparent material for the helper
     const helperMat = new THREE.MeshBasicMaterial({
-        color: 0x00ffff,
+        color: 0x88ddff,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.1, // Very transparent
+        opacity: 0.03, // Almost invisible
         depthWrite: false
     });
     
