@@ -18,6 +18,13 @@ let currentDesign = {
 };
 let controls; // For orbit controls
 
+// Cross-section view variables
+let clippingPlane;
+let clippingEnabled = false;
+let clippingAxis = 'z';
+let clippingPosition = 0;
+let clipHelperPlane;
+
 // Material properties database
 const materialProperties = {
     core: {
@@ -992,6 +999,12 @@ function initThreeJS() {
         document.getElementById('nanoparticleCanvas').clientHeight
     );
     
+    // Enable clipping planes for the renderer
+    renderer.localClippingEnabled = true;
+    
+    // Initialize default clipping plane (disabled by default)
+    clippingPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+    
     // Add orbit controls
     try {
         controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -1006,6 +1019,9 @@ function initThreeJS() {
     
     // Add zoom buttons
     addZoomControls();
+    
+    // Add clipping plane controls
+    initClippingControls();
     
     // Add lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -1072,6 +1088,12 @@ function createNanoparticle() {
             scene.remove(nanoparticle);
         }
         
+        // Remove any existing clipping plane helper
+        if (clipHelperPlane) {
+            scene.remove(clipHelperPlane);
+            clipHelperPlane = null;
+        }
+        
         // Create a new group for the nanoparticle
         nanoparticle = new THREE.Group();
         
@@ -1085,7 +1107,9 @@ function createNanoparticle() {
             color: materialProperties.core[currentDesign.core.material].color,
             shininess: 60,
             transparent: true,
-            opacity: 0.9
+            opacity: 0.9,
+            // Add clipping planes if enabled
+            clippingPlanes: clippingEnabled ? [clippingPlane] : []
         });
         
         const core = new THREE.Mesh(coreGeometry, coreMaterial);
@@ -1115,7 +1139,9 @@ function createNanoparticle() {
                             transparent: true,
                             opacity: 0.7,
                             shininess: 30,
-                            wireframe: false
+                            wireframe: false,
+                            // Add clipping planes if enabled
+                            clippingPlanes: clippingEnabled ? [clippingPlane] : []
                         });
                         
                         const layerMesh = new THREE.Mesh(layerGeometry, layerMaterial);
@@ -1128,7 +1154,8 @@ function createNanoparticle() {
                             newDiameter,
                             getLayerPropertyByType(layer.type, layer.material, 'color'),
                             layer.coverage,
-                            layer.coverageStyle || 'capped' // Default to capped if not specified
+                            layer.coverageStyle || 'capped', // Default to capped if not specified
+                            clippingEnabled ? [clippingPlane] : [] // Pass clipping planes
                         );
                     }
                     
@@ -1143,6 +1170,11 @@ function createNanoparticle() {
         // Add nanoparticle to scene
         scene.add(nanoparticle);
         
+        // Add a helper plane to visualize the clipping plane if enabled
+        if (clippingEnabled) {
+            addClippingPlaneHelper();
+        }
+        
         // Center the camera view on the nanoparticle
         autoScaleView();
     } catch (error) {
@@ -1153,7 +1185,7 @@ function createNanoparticle() {
 }
 
 // Simplified safe version of partial coverage that won't break the model
-function createSafePartialCoverage(shape, innerDiameter, outerDiameter, color, coverage, coverageStyle) {
+function createSafePartialCoverage(shape, innerDiameter, outerDiameter, color, coverage, coverageStyle, clippingPlanes) {
     try {
         const innerRadius = innerDiameter / 2;
         const outerRadius = outerDiameter / 2;
@@ -1165,7 +1197,8 @@ function createSafePartialCoverage(shape, innerDiameter, outerDiameter, color, c
             transparent: true,
             opacity: 0.7,
             shininess: 30,
-            side: THREE.DoubleSide
+            side: THREE.DoubleSide,
+            clippingPlanes: clippingPlanes
         });
         
         if (coverageStyle === 'sparse' || !coverageStyle) {
@@ -1222,7 +1255,8 @@ function createSafePartialCoverage(shape, innerDiameter, outerDiameter, color, c
                 color: color,
                 transparent: true,
                 opacity: 0.4,
-                wireframe: true
+                wireframe: true,
+                clippingPlanes: clippingPlanes
             });
             const shell = new THREE.Mesh(shellGeometry, simpleMaterial);
             nanoparticle.add(shell);
@@ -1277,6 +1311,11 @@ function createGeometryByShape(shape, size) {
 }
 
 function updateNanoparticleModel() {
+    // Update clipping plane if enabled
+    if (clippingEnabled) {
+        updateClippingPlane();
+    }
+    
     createNanoparticle();
 }
 
@@ -1938,4 +1977,118 @@ function createPartialCoverage(shape, innerDiameter, outerDiameter, color, cover
     } catch (error) {
         console.error("Error in createPartialCoverage:", error);
     }
+}
+
+function initClippingControls() {
+    // Get control elements
+    const crossSectionToggle = document.getElementById('crossSectionToggle');
+    const crossSectionControls = document.getElementById('crossSectionControls');
+    const crossSectionAxis = document.getElementById('crossSectionAxis');
+    const crossSectionPosition = document.getElementById('crossSectionPosition');
+    const resetCrossSectionBtn = document.getElementById('resetCrossSectionBtn');
+    
+    // Toggle cross-section view
+    crossSectionToggle.addEventListener('change', (e) => {
+        clippingEnabled = e.target.checked;
+        crossSectionControls.style.display = clippingEnabled ? 'block' : 'none';
+        
+        updateClippingPlane();
+        createNanoparticle(); // Recreate with or without clipping
+    });
+    
+    // Change clipping axis
+    crossSectionAxis.addEventListener('change', (e) => {
+        clippingAxis = e.target.value;
+        updateClippingPlane();
+        createNanoparticle();
+    });
+    
+    // Update clipping position
+    crossSectionPosition.addEventListener('input', (e) => {
+        clippingPosition = parseFloat(e.target.value);
+        updateClippingPlane();
+        
+        // Only update the helper plane, not the entire nanoparticle for better performance
+        if (clipHelperPlane) {
+            scene.remove(clipHelperPlane);
+            addClippingPlaneHelper();
+        }
+    });
+    
+    // Reset cross-section
+    resetCrossSectionBtn.addEventListener('click', () => {
+        clippingPosition = 0;
+        crossSectionPosition.value = 0;
+        updateClippingPlane();
+        
+        if (clipHelperPlane) {
+            scene.remove(clipHelperPlane);
+            addClippingPlaneHelper();
+        }
+    });
+}
+
+function updateClippingPlane() {
+    // Create normal vector based on selected axis
+    let normal;
+    switch (clippingAxis) {
+        case 'x':
+            normal = new THREE.Vector3(1, 0, 0);
+            break;
+        case 'y':
+            normal = new THREE.Vector3(0, 1, 0);
+            break;
+        case 'z':
+        default:
+            normal = new THREE.Vector3(0, 0, 1);
+            break;
+    }
+    
+    // Calculate the distance (constant) value for the plane equation ax + by + cz + d = 0
+    // This represents how far from the origin the plane is positioned
+    let distance = clippingPosition * (currentDesign.core.size / 2);
+    
+    // Update clipping plane with new normal and position
+    clippingPlane.normal.copy(normal);
+    clippingPlane.constant = distance;
+}
+
+function addClippingPlaneHelper() {
+    // Calculate appropriate size for helper plane based on particle size
+    const size = Math.max(currentDesign.core.size * 2, 100);
+    
+    // Create a plane geometry parallel to the clipping plane
+    const helperGeo = new THREE.PlaneGeometry(size, size);
+    
+    // Create a semi-transparent material for the helper
+    const helperMat = new THREE.MeshBasicMaterial({
+        color: 0x00ffff,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.2,
+        depthWrite: false
+    });
+    
+    // Create the helper plane mesh
+    clipHelperPlane = new THREE.Mesh(helperGeo, helperMat);
+    
+    // Position and rotate helper to match clipping plane
+    // The orientation depends on which axis we're clipping along
+    switch (clippingAxis) {
+        case 'x':
+            clipHelperPlane.rotation.y = Math.PI / 2;
+            clipHelperPlane.position.x = clippingPosition * (currentDesign.core.size / 2);
+            break;
+        case 'y':
+            clipHelperPlane.rotation.x = Math.PI / 2;
+            clipHelperPlane.position.y = clippingPosition * (currentDesign.core.size / 2);
+            break;
+        case 'z':
+        default:
+            clipHelperPlane.position.z = clippingPosition * (currentDesign.core.size / 2);
+            break;
+    }
+    
+    // Add the helper to the scene
+    scene.add(clipHelperPlane);
 }

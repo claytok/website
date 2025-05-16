@@ -139,6 +139,26 @@
                             <div id="view-3d" class="tab-content active">
                                 <div class="canvas-container">
                                     <canvas id="nanoparticleCanvas"></canvas>
+                                    <div class="view-controls">
+                                        <div class="view-control-group">
+                                            <label class="control-label">Cross-Section View</label>
+                                            <div class="toggle-container">
+                                                <input type="checkbox" id="crossSectionToggle" class="toggle-input">
+                                                <label for="crossSectionToggle" class="toggle-label"></label>
+                                            </div>
+                                        </div>
+                                        <div class="view-control-group" id="crossSectionControls" style="display: none;">
+                                            <label for="crossSectionAxis">Axis:</label>
+                                            <select id="crossSectionAxis" class="control-select">
+                                                <option value="x">X Axis</option>
+                                                <option value="y">Y Axis</option>
+                                                <option value="z" selected>Z Axis</option>
+                                            </select>
+                                            <label for="crossSectionPosition">Position:</label>
+                                            <input type="range" id="crossSectionPosition" min="-1" max="1" step="0.01" value="0" class="control-slider">
+                                            <button id="resetCrossSectionBtn" class="control-btn">Reset</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div id="view-layers" class="tab-content">
