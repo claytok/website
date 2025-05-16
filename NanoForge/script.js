@@ -24,6 +24,7 @@ let clippingEnabled = false;
 let clippingAxis = 'z';
 let clippingPosition = 0;
 let clipHelperPlane;
+let showHelperPlane = true;
 
 // Material properties database
 const materialProperties = {
@@ -1170,8 +1171,8 @@ function createNanoparticle() {
         // Add nanoparticle to scene
         scene.add(nanoparticle);
         
-        // Add a helper plane to visualize the clipping plane if enabled
-        if (clippingEnabled) {
+        // Add a helper plane to visualize the clipping plane if enabled and helper is visible
+        if (clippingEnabled && showHelperPlane) {
             addClippingPlaneHelper();
         }
         
@@ -1986,6 +1987,7 @@ function initClippingControls() {
     const crossSectionAxis = document.getElementById('crossSectionAxis');
     const crossSectionPosition = document.getElementById('crossSectionPosition');
     const resetCrossSectionBtn = document.getElementById('resetCrossSectionBtn');
+    const showHelperPlaneToggle = document.getElementById('showHelperPlane');
     
     // Toggle cross-section view
     crossSectionToggle.addEventListener('change', (e) => {
@@ -2011,6 +2013,22 @@ function initClippingControls() {
         // Only update the helper plane, not the entire nanoparticle for better performance
         if (clipHelperPlane) {
             scene.remove(clipHelperPlane);
+            if (showHelperPlane) {
+                addClippingPlaneHelper();
+            }
+        }
+    });
+    
+    // Helper plane toggle
+    showHelperPlaneToggle.addEventListener('change', (e) => {
+        showHelperPlane = e.target.checked;
+        
+        if (clipHelperPlane) {
+            scene.remove(clipHelperPlane);
+            clipHelperPlane = null;
+        }
+        
+        if (showHelperPlane && clippingEnabled) {
             addClippingPlaneHelper();
         }
     });
@@ -2023,7 +2041,9 @@ function initClippingControls() {
         
         if (clipHelperPlane) {
             scene.remove(clipHelperPlane);
-            addClippingPlaneHelper();
+            if (showHelperPlane) {
+                addClippingPlaneHelper();
+            }
         }
     });
 }
@@ -2055,17 +2075,24 @@ function updateClippingPlane() {
 
 function addClippingPlaneHelper() {
     // Calculate appropriate size for helper plane based on particle size
-    const size = Math.max(currentDesign.core.size * 2, 100);
+    // Make it just slightly larger than the particle for less intrusion
+    const particleSize = currentDesign.core.size;
+    const maxLayerSize = currentDesign.layers.reduce((max, layer) => {
+        return Math.max(max, layer.thickness || 0);
+    }, 0);
+    
+    // Size the helper plane to just cover the particle with a small margin
+    const size = (particleSize + (maxLayerSize * 2)) * 1.2;
     
     // Create a plane geometry parallel to the clipping plane
     const helperGeo = new THREE.PlaneGeometry(size, size);
     
-    // Create a semi-transparent material for the helper
+    // Create a more transparent material for the helper
     const helperMat = new THREE.MeshBasicMaterial({
         color: 0x00ffff,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.2,
+        opacity: 0.15, // More transparent
         depthWrite: false
     });
     
