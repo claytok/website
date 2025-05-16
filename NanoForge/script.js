@@ -723,6 +723,60 @@ function setupEventListeners() {
             document.getElementById('layerCoverageValue').textContent = `${value}%`;
         }
     });
+    
+    // Setup keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // H key to toggle helper plane visibility
+        if (e.key === 'h' && clippingEnabled) {
+            showHelperPlane = !showHelperPlane;
+            if (clipHelperPlane) {
+                scene.remove(clipHelperPlane);
+                clipHelperPlane = null;
+            }
+            
+            if (showHelperPlane) {
+                addClippingPlaneHelper();
+                showToast('Helper plane visible');
+            } else {
+                showToast('Helper plane hidden');
+            }
+            
+            // Update toggle in UI if available
+            const showHelperPlaneToggle = document.getElementById('showHelperPlane');
+            if (showHelperPlaneToggle) {
+                showHelperPlaneToggle.checked = showHelperPlane;
+            }
+        }
+        
+        // C key to toggle the entire cross-section view
+        if (e.key === 'c') {
+            clippingEnabled = !clippingEnabled;
+            
+            // Update UI
+            const crossSectionToggle = document.getElementById('crossSectionToggle');
+            const crossSectionControls = document.getElementById('crossSectionControls');
+            
+            if (crossSectionToggle) {
+                crossSectionToggle.checked = clippingEnabled;
+            }
+            
+            if (crossSectionControls) {
+                crossSectionControls.style.display = clippingEnabled ? 'block' : 'none';
+            }
+            
+            // Remove helper plane if disabling
+            if (!clippingEnabled && clipHelperPlane) {
+                scene.remove(clipHelperPlane);
+                clipHelperPlane = null;
+            }
+            
+            // Create new particle with or without clipping
+            createNanoparticle();
+            
+            // Show notification
+            showToast(clippingEnabled ? 'Cross-section view enabled' : 'Cross-section view disabled');
+        }
+    });
 }
 
 function updateSizeDisplay() {
@@ -1996,6 +2050,11 @@ function initClippingControls() {
         
         updateClippingPlane();
         createNanoparticle(); // Recreate with or without clipping
+        
+        // Show a notification about the keyboard shortcut the first time cross-section is enabled
+        if (clippingEnabled) {
+            showToast('Press H key to toggle helper plane visibility', 3000);
+        }
     });
     
     // Change clipping axis
@@ -2077,22 +2136,20 @@ function addClippingPlaneHelper() {
     // Calculate appropriate size for helper plane based on particle size
     // Make it just slightly larger than the particle for less intrusion
     const particleSize = currentDesign.core.size;
-    const maxLayerSize = currentDesign.layers.reduce((max, layer) => {
-        return Math.max(max, layer.thickness || 0);
-    }, 0);
+    const totalSize = calculateHydrodynamicDiameter(currentDesign);
     
     // Size the helper plane to just cover the particle with a small margin
-    const size = (particleSize + (maxLayerSize * 2)) * 1.2;
+    const size = totalSize * 1.1;
     
     // Create a plane geometry parallel to the clipping plane
     const helperGeo = new THREE.PlaneGeometry(size, size);
     
-    // Create a more transparent material for the helper
+    // Create a much more transparent material for the helper
     const helperMat = new THREE.MeshBasicMaterial({
         color: 0x00ffff,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.15, // More transparent
+        opacity: 0.1, // Very transparent
         depthWrite: false
     });
     
@@ -2118,4 +2175,64 @@ function addClippingPlaneHelper() {
     
     // Add the helper to the scene
     scene.add(clipHelperPlane);
+}
+
+// Function to show toast notifications
+function showToast(message, duration = 2000) {
+    // Check if a toast container already exists
+    let toastContainer = document.querySelector('.toast-container');
+    
+    // Create container if it doesn't exist
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        toastContainer.style.position = 'fixed';
+        toastContainer.style.bottom = '20px';
+        toastContainer.style.left = '50%';
+        toastContainer.style.transform = 'translateX(-50%)';
+        toastContainer.style.zIndex = '1000';
+        document.body.appendChild(toastContainer);
+    }
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+    toast.style.color = 'white';
+    toast.style.padding = '10px 20px';
+    toast.style.borderRadius = '4px';
+    toast.style.marginTop = '10px';
+    toast.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
+    toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    toast.textContent = message;
+    
+    // Add to container
+    toastContainer.appendChild(toast);
+    
+    // Trigger reflow to enable transition
+    toast.offsetHeight;
+    
+    // Show toast
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+    
+    // Auto-remove after duration
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        
+        // Remove from DOM after fade out
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+            
+            // Remove container if empty
+            if (toastContainer.children.length === 0) {
+                document.body.removeChild(toastContainer);
+            }
+        }, 300);
+    }, duration);
 }
