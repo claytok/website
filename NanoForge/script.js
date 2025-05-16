@@ -21,10 +21,6 @@ let controls; // For orbit controls
 // Cross-section view variables
 let clippingPlane;
 let clippingEnabled = false;
-let clippingAxis = 'z';
-let clippingPosition = 0;
-let clipHelperPlane;
-let showHelperPlane = true;
 
 // Material properties database
 const materialProperties = {
@@ -724,59 +720,18 @@ function setupEventListeners() {
         }
     });
     
-    // Setup keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // H key to toggle helper plane visibility
-        if (e.key === 'h' && clippingEnabled) {
-            showHelperPlane = !showHelperPlane;
-            if (clipHelperPlane) {
-                scene.remove(clipHelperPlane);
-                clipHelperPlane = null;
+    // Cross-section view toggle
+    const crossSectionToggle = document.getElementById('crossSectionToggle');
+    if (crossSectionToggle) {
+        crossSectionToggle.addEventListener('change', function() {
+            clippingEnabled = this.checked;
+            // Update clipping plane position to cut through the middle
+            if (clippingEnabled) {
+                clippingPlane.constant = 0;
             }
-            
-            if (showHelperPlane) {
-                addClippingPlaneHelper();
-                showToast('Helper plane visible');
-            } else {
-                showToast('Helper plane hidden');
-            }
-            
-            // Update toggle in UI if available
-            const showHelperPlaneToggle = document.getElementById('showHelperPlane');
-            if (showHelperPlaneToggle) {
-                showHelperPlaneToggle.checked = showHelperPlane;
-            }
-        }
-        
-        // C key to toggle the entire cross-section view
-        if (e.key === 'c') {
-            clippingEnabled = !clippingEnabled;
-            
-            // Update UI
-            const crossSectionToggle = document.getElementById('crossSectionToggle');
-            const crossSectionControls = document.getElementById('crossSectionControls');
-            
-            if (crossSectionToggle) {
-                crossSectionToggle.checked = clippingEnabled;
-            }
-            
-            if (crossSectionControls) {
-                crossSectionControls.style.display = clippingEnabled ? 'block' : 'none';
-            }
-            
-            // Remove helper plane if disabling
-            if (!clippingEnabled && clipHelperPlane) {
-                scene.remove(clipHelperPlane);
-                clipHelperPlane = null;
-            }
-            
-            // Create new particle with or without clipping
-            createNanoparticle();
-            
-            // Show notification
-            showToast(clippingEnabled ? 'Cross-section view enabled' : 'Cross-section view disabled');
-        }
-    });
+            createNanoparticle(); // Re-create with clipping enabled
+        });
+    }
 }
 
 function updateSizeDisplay() {
@@ -820,32 +775,6 @@ function openAddLayerModal() {
     const modal = document.getElementById('addLayerModal');
     modal.classList.add('open');
     
-    // Add coverage style radio buttons if they don't exist yet
-    const coverageStyleContainer = modal.querySelector('.coverage-style-container');
-    
-    if (!coverageStyleContainer) {
-        // Create container for coverage style options
-        const styleContainer = document.createElement('div');
-        styleContainer.className = 'coverage-style-container';
-        styleContainer.innerHTML = `
-            <label>Coverage Style:</label>
-            <div class="radio-group">
-                <label>
-                    <input type="radio" name="coverageStyle" value="capped" checked>
-                    Capped (localized coverage)
-                </label>
-                <label>
-                    <input type="radio" name="coverageStyle" value="sparse">
-                    Sparse (distributed coverage)
-                </label>
-            </div>
-        `;
-        
-        // Find where to insert the coverage style options
-        const sliderContainer = modal.querySelector('.slider-container');
-        sliderContainer.appendChild(styleContainer);
-    }
-    
     // Initialize layer material dropdown based on first option
     updateLayerMaterialOptions();
 }
@@ -888,9 +817,6 @@ function addNewLayer() {
     const coverageInput = document.getElementById('layerCoverageInput');
     const coverage = parseInt(coverageInput.value) || parseInt(coverageSlider.value) || 90;
     
-    // Get coverage style - add radio button selection
-    const coverageStyle = document.querySelector('input[name="coverageStyle"]:checked').value;
-    
     // Get material name for display
     const materialName = materialProperties.layer[type].options[material].name;
     
@@ -899,8 +825,7 @@ function addNewLayer() {
         material,
         materialName,
         thickness,
-        coverage,
-        coverageStyle
+        coverage
     };
     
     // Add to design
@@ -1054,10 +979,10 @@ function initThreeJS() {
         document.getElementById('nanoparticleCanvas').clientHeight
     );
     
-    // Disable clipping planes - we're removing this feature
-    renderer.localClippingEnabled = false;
+    // Enable local clipping
+    renderer.localClippingEnabled = true;
     
-    // Initialize default clipping plane (disabled by default)
+    // Initialize default clipping plane
     clippingPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
     
     // Add orbit controls
@@ -1074,9 +999,6 @@ function initThreeJS() {
     
     // Add zoom buttons
     addZoomControls();
-    
-    // Add clipping plane controls
-    initClippingControls();
     
     // Add lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -1137,206 +1059,183 @@ function addZoomControls() {
 }
 
 function createNanoparticle() {
-    try {
-        // Clear previous model if exists
-        if (nanoparticle) {
-            scene.remove(nanoparticle);
-        }
-        
-        // Remove any existing clipping plane helper
-        if (clipHelperPlane) {
-            scene.remove(clipHelperPlane);
-            clipHelperPlane = null;
-        }
-        
-        // Force clipping to be disabled - we're removing this feature for now
-        clippingEnabled = false;
-        
-        // Create a new group for the nanoparticle
-        nanoparticle = new THREE.Group();
-        
-        // Create core
-        const coreGeometry = createGeometryByShape(
-            currentDesign.core.shape, 
-            currentDesign.core.size
-        );
-        
-        const coreMaterial = new THREE.MeshPhongMaterial({
-            color: materialProperties.core[currentDesign.core.material].color,
-            shininess: 60,
-            transparent: true,
-            opacity: 0.9
-        });
-        
-        const core = new THREE.Mesh(coreGeometry, coreMaterial);
-        nanoparticle.add(core);
-        
-        // Add layers
-        let currentDiameter = currentDesign.core.size;
-        
-        if (currentDesign.layers && currentDesign.layers.length > 0) {
-            currentDesign.layers.forEach((layer, index) => {
-                try {
-                    const layerThickness = layer.thickness;
-                    const newDiameter = currentDiameter + (layerThickness * 2);
-                    const coverage = layer.coverage / 100; // Convert percentage to decimal
-                    
-                    if (coverage >= 0.95) {
-                        // If coverage is near complete, show as a full layer
-                        const layerGeometry = createGeometryByShape(
-                            currentDesign.core.shape,
-                            newDiameter
-                        );
-                        
-                        const layerColor = getLayerPropertyByType(layer.type, layer.material, 'color');
-                        
-                        const layerMaterial = new THREE.MeshPhongMaterial({
-                            color: layerColor,
-                            transparent: true,
-                            opacity: 0.7,
-                            shininess: 30,
-                            wireframe: false,
-                            // Add clipping planes if enabled
-                            clippingPlanes: clippingEnabled ? [clippingPlane] : []
-                        });
-                        
-                        const layerMesh = new THREE.Mesh(layerGeometry, layerMaterial);
-                        nanoparticle.add(layerMesh);
-                    } else {
-                        // Safer approach for partial coverage visualization
-                        createSafePartialCoverage(
-                            currentDesign.core.shape,
-                            currentDiameter,
-                            newDiameter,
-                            getLayerPropertyByType(layer.type, layer.material, 'color'),
-                            layer.coverage,
-                            layer.coverageStyle || 'capped', // Default to capped if not specified
-                            clippingEnabled ? [clippingPlane] : [] // Pass clipping planes
-                        );
-                    }
-                    
-                    currentDiameter = newDiameter;
-                } catch (layerError) {
-                    console.error("Error adding layer:", layerError);
-                    // Continue with the next layer even if this one fails
-                }
-            });
-        }
-        
-        // Add nanoparticle to scene
-        scene.add(nanoparticle);
-        
-        // Add a helper plane to visualize the clipping plane if enabled and helper is visible
-        if (clippingEnabled && showHelperPlane) {
-            addClippingPlaneHelper();
-        }
-        
-        // Center the camera view on the nanoparticle
-        autoScaleView();
-    } catch (error) {
-        console.error("Error creating nanoparticle:", error);
-        // Create a simple sphere as fallback to ensure something is visible
-        createFallbackParticle();
+    // Clear previous model if exists
+    if (nanoparticle) {
+        scene.remove(nanoparticle);
     }
-}
-
-// Simplified safe version of partial coverage that won't break the model
-function createSafePartialCoverage(shape, innerDiameter, outerDiameter, color, coverage, coverageStyle, clippingPlanes) {
-    try {
-        const innerRadius = innerDiameter / 2;
-        const outerRadius = outerDiameter / 2;
-        const thickness = outerRadius - innerRadius;
-        
-        // Simple material
-        const layerMaterial = new THREE.MeshPhongMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.7,
-            shininess: 30,
-            side: THREE.DoubleSide,
-            clippingPlanes: clippingPlanes
-        });
-        
-        if (coverageStyle === 'sparse' || !coverageStyle) {
-            // Simplified sparse coverage with fewer particles
-            const numberOfPatches = Math.max(5, Math.min(30, Math.floor(coverage / 3)));
-            const patchSize = thickness * 1.5;
-            
-            for (let i = 0; i < numberOfPatches; i++) {
-                // Use simple math to distribute points on sphere
-                const phi = Math.acos(-1 + (2 * i) / numberOfPatches);
-                const theta = Math.sqrt(numberOfPatches * Math.PI) * phi;
-                
-                // Convert to cartesian coordinates
-                const x = Math.sin(phi) * Math.cos(theta) * outerRadius;
-                const y = Math.sin(phi) * Math.sin(theta) * outerRadius;
-                const z = Math.cos(phi) * outerRadius;
-                
-                // Create a patch
-                const patch = new THREE.Mesh(
-                    new THREE.SphereGeometry(patchSize, 8, 8),
-                    layerMaterial
-                );
-                patch.position.set(x, y, z);
-                nanoparticle.add(patch);
-            }
-        } else {
-            // Simplified capped coverage
-            const coverageRadians = Math.PI * (coverage / 100);
-            
-            // Just use a simple partial sphere
-            const capGeometry = new THREE.SphereGeometry(
-                outerRadius, 
-                32, 32, 
-                0, Math.PI * 2, 
-                0, coverageRadians
-            );
-            
-            const cap = new THREE.Mesh(capGeometry, layerMaterial);
-            nanoparticle.add(cap);
-            
-            // If coverage is high, add a cap at the bottom too
-            if (coverage > 50) {
-                const bottomCap = new THREE.Mesh(capGeometry.clone(), layerMaterial.clone());
-                bottomCap.rotation.x = Math.PI;
-                nanoparticle.add(bottomCap);
-            }
-        }
-    } catch (error) {
-        console.error("Error in createSafePartialCoverage:", error);
-        // If this fails, just add a simple shell around the particle
-        try {
-            const shellGeometry = createGeometryByShape(shape, outerDiameter);
-            const simpleMaterial = new THREE.MeshPhongMaterial({
-                color: color,
-                transparent: true,
-                opacity: 0.4,
-                wireframe: true,
-                clippingPlanes: clippingPlanes
-            });
-            const shell = new THREE.Mesh(shellGeometry, simpleMaterial);
-            nanoparticle.add(shell);
-        } catch (fallbackError) {
-            console.error("Even fallback failed:", fallbackError);
-        }
-    }
-}
-
-// Fallback function to ensure something is visible
-function createFallbackParticle() {
-    const fallbackGeometry = new THREE.SphereGeometry(50, 16, 16);
-    const fallbackMaterial = new THREE.MeshBasicMaterial({
-        color: 0xFF0000,
-        wireframe: true
+    
+    // Create a new group for the nanoparticle
+    nanoparticle = new THREE.Group();
+    
+    // Create core
+    const coreGeometry = createGeometryByShape(
+        currentDesign.core.shape, 
+        currentDesign.core.size
+    );
+    
+    const coreMaterial = new THREE.MeshPhongMaterial({
+        color: materialProperties.core[currentDesign.core.material].color,
+        shininess: 60,
+        transparent: true,
+        opacity: 0.9,
+        clippingPlanes: clippingEnabled ? [clippingPlane] : []
     });
     
-    const fallbackMesh = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
+    const core = new THREE.Mesh(coreGeometry, coreMaterial);
+    nanoparticle.add(core);
     
-    nanoparticle = new THREE.Group();
-    nanoparticle.add(fallbackMesh);
+    // Add layers
+    let currentDiameter = currentDesign.core.size;
+    
+    currentDesign.layers.forEach((layer, index) => {
+        const layerThickness = layer.thickness;
+        const newDiameter = currentDiameter + (layerThickness * 2);
+        const coverage = layer.coverage / 100; // Convert percentage to decimal
+        
+        if (coverage >= 0.95) {
+            // If coverage is near complete, show as a full layer
+            const layerGeometry = createGeometryByShape(
+                currentDesign.core.shape,
+                newDiameter
+            );
+            
+            const layerColor = getLayerPropertyByType(layer.type, layer.material, 'color');
+            
+            const layerMaterial = new THREE.MeshPhongMaterial({
+                color: layerColor,
+                transparent: true,
+                opacity: 0.7,
+                shininess: 30,
+                wireframe: false
+            });
+            
+            const layerMesh = new THREE.Mesh(layerGeometry, layerMaterial);
+            nanoparticle.add(layerMesh);
+        } else {
+            // For partial coverage, create partial geometries
+            createPartialCoverage(
+                currentDesign.core.shape,
+                currentDiameter,
+                newDiameter,
+                getLayerPropertyByType(layer.type, layer.material, 'color'),
+                coverage
+            );
+        }
+        
+        currentDiameter = newDiameter;
+    });
+    
+    // Add nanoparticle to scene
     scene.add(nanoparticle);
     
-    console.log("Created fallback particle due to error");
+    // Center the camera view on the nanoparticle
+    autoScaleView();
+}
+
+function createPartialCoverage(shape, innerDiameter, outerDiameter, color, coverage) {
+    // Different strategies based on shape
+    if (shape === 'sphere') {
+        createPartialSphereCoverage(innerDiameter, outerDiameter, color, coverage);
+    } else {
+        // For non-spherical shapes, use patch-based approach
+        createPatchBasedCoverage(shape, innerDiameter, outerDiameter, color, coverage);
+    }
+}
+
+function createPartialSphereCoverage(innerDiameter, outerDiameter, color, coverage) {
+    // For spheres, we'll use a latitude-based cutoff to represent coverage percentage
+    const innerRadius = innerDiameter / 2;
+    const outerRadius = outerDiameter / 2;
+    
+    // Calculate the cutoff angle based on coverage
+    // coverage = (1 - cos(theta)) / 2, solve for theta
+    const cutoffAngle = Math.acos(1 - 2 * coverage);
+    
+    // Create a spherical shell with holes
+    const segments = 32;
+    
+    // Create points for the partial sphere
+    const points = [];
+    for (let i = 0; i <= segments; i++) {
+        const theta = (i / segments) * cutoffAngle;
+        const y = Math.cos(theta);
+        const radius = Math.sin(theta);
+        points.push(new THREE.Vector2(radius, y));
+    }
+    
+    // Create a lathe geometry that will generate a partial sphere
+    const latheGeometry = new THREE.LatheGeometry(points, 32);
+    latheGeometry.scale(outerRadius, outerRadius, outerRadius);
+    
+    // Create a hole for the inner sphere
+    const innerPoints = [];
+    for (let i = 0; i <= segments; i++) {
+        const theta = (i / segments) * cutoffAngle;
+        const y = Math.cos(theta);
+        const radius = Math.sin(theta);
+        innerPoints.push(new THREE.Vector2(radius, y));
+    }
+    
+    const innerLatheGeometry = new THREE.LatheGeometry(innerPoints, 32);
+    innerLatheGeometry.scale(innerRadius, innerRadius, innerRadius);
+    
+    // Create materials
+    const layerMaterial = new THREE.MeshPhongMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.7,
+        shininess: 30,
+        side: THREE.DoubleSide
+    });
+    
+    // Create upper hemisphere
+    const upperHemisphere = new THREE.Mesh(latheGeometry, layerMaterial);
+    nanoparticle.add(upperHemisphere);
+    
+    // Mirror for lower hemisphere if needed
+    if (coverage > 0.5) {
+        const lowerHemisphere = upperHemisphere.clone();
+        lowerHemisphere.rotation.x = Math.PI;
+        nanoparticle.add(lowerHemisphere);
+    }
+}
+
+function createPatchBasedCoverage(shape, innerDiameter, outerDiameter, color, coverage) {
+    // For non-spherical shapes, create patches of material on the surface
+    const layerMaterial = new THREE.MeshPhongMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.7,
+        shininess: 30
+    });
+    
+    // Number of patches based on coverage
+    const maxPatches = 50;
+    const numPatches = Math.floor(maxPatches * coverage);
+    
+    // Get the outer geometry shape for reference points
+    const referenceGeometry = createGeometryByShape(shape, outerDiameter);
+    const positions = referenceGeometry.attributes.position.array;
+    
+    // Place patches randomly on surface
+    for (let i = 0; i < numPatches; i++) {
+        // Get a random vertex from the reference geometry
+        const vertexIndex = Math.floor(Math.random() * (positions.length / 3)) * 3;
+        const x = positions[vertexIndex];
+        const y = positions[vertexIndex + 1];
+        const z = positions[vertexIndex + 2];
+        
+        // Create a small sphere as a patch
+        const patchSize = (outerDiameter - innerDiameter) * 0.8;
+        const patchGeometry = new THREE.SphereGeometry(patchSize, 8, 8);
+        const patch = new THREE.Mesh(patchGeometry, layerMaterial);
+        
+        // Position the patch
+        patch.position.set(x, y, z);
+        
+        // Add to nanoparticle
+        nanoparticle.add(patch);
+    }
 }
 
 function createGeometryByShape(shape, size) {
@@ -1367,11 +1266,6 @@ function createGeometryByShape(shape, size) {
 }
 
 function updateNanoparticleModel() {
-    // Update clipping plane if enabled
-    if (clippingEnabled) {
-        updateClippingPlane();
-    }
-    
     createNanoparticle();
 }
 
@@ -1381,28 +1275,33 @@ function autoScaleView() {
     const center = boundingBox.getCenter(new THREE.Vector3());
     const size = boundingBox.getSize(new THREE.Vector3());
     
-    // Get the maximum dimension of the particle
+    // Set camera position based on size
     const maxDim = Math.max(size.x, size.y, size.z);
     
-    // Base distance that ensures the smallest particle (5nm) is clearly visible
-    const baseDistance = 200;
+    // Base scaling - significantly increased for larger particles
+    let scaleFactor;
     
-    // Calculate camera position based on actual particle size relative to max possible size (1000nm)
-    // This ensures a 1000nm particle appears 10x larger than a 100nm particle
-    // while still keeping both fully in view
-    const maxPossibleSize = 1000;
-    const relativeSizeRatio = currentDesign.core.size / maxPossibleSize;
-    
-    // Scale factor is inversely proportional to particle size
-    // Smaller particles need higher scale factors to be visible
-    const scaleFactor = 10 / (0.5 + relativeSizeRatio * 0.5);
+    // Determine scale factor based on particle size
+    if (currentDesign.core.size > 900) {
+        scaleFactor = 12; // Very large particles
+    } else if (currentDesign.core.size > 700) {
+        scaleFactor = 10; // Large particles
+    } else if (currentDesign.core.size > 500) {
+        scaleFactor = 8;  // Medium-large particles
+    } else if (currentDesign.core.size > 200) {
+        scaleFactor = 6;  // Medium particles
+    } else {
+        scaleFactor = 4;  // Default for smaller particles
+    }
     
     // Apply the scale factor to position the camera
     camera.position.z = maxDim * scaleFactor;
     
-    // Ensure camera can see very large particles
-    camera.far = Math.max(10000, camera.position.z * 5);
-    camera.updateProjectionMatrix();
+    // For very large particles, increase the camera's far clipping plane
+    if (currentDesign.core.size > 500) {
+        camera.far = 10000;
+        camera.updateProjectionMatrix();
+    }
     
     // Update controls
     if (controls) {
@@ -1646,72 +1545,26 @@ function generateRecommendations(design) {
     return recommendations.join(" ");
 }
 
-// Check if user is authorized for operations that require authentication
-function isUserAuthorized() {
-    // In a real app, this would check for a valid auth token
-    // For now, we'll implement a basic check that would be replaced with proper auth
-    const userToken = localStorage.getItem('user_token');
-    return !!userToken;
-}
-
-// Prompt user to log in
-function promptLogin() {
-    const confirmed = confirm('You need to be logged in to perform this action. Would you like to log in now?');
-    if (confirmed) {
-        // In a real app, this would redirect to a login page
-        alert('This would redirect to a login page in a real application.');
-        return false;
-    }
-    return false;
-}
-
+// Functions for action buttons
 function saveDesign() {
-    // Check if user is authorized
-    if (!isUserAuthorized()) {
-        return promptLogin();
-    }
-
-    const designName = prompt('Enter a name for this design:', 'My Nanoparticle Design');
-    if (!designName) return;
-
-    // Sanitize the design name
-    const sanitizedName = designName.replace(/[<>]/g, '');
-
-    // Continue with original saveDesign functionality
-    const design = {
-        name: sanitizedName,
-        timestamp: new Date().toISOString(),
-        core: { ...currentDesign.core },
-        layers: [...currentDesign.layers],
-        environment: { ...currentDesign.environment },
-        properties: {
-            hydroDiameter: calculateHydrodynamicDiameter(currentDesign),
-            zetaPotential: calculateZetaPotential(currentDesign),
-            aggregationPotential: calculateAggregationPotential(currentDesign),
-            surfaceCoverage: currentDesign.layers.length > 0 ? '92%' : '0%'
-        }
-    };
-
-    // In a real app, this would save to a database
-    // For now, store in localStorage
-    try {
-        const savedDesigns = JSON.parse(localStorage.getItem('nanoforgeDesigns') || '[]');
-        savedDesigns.push(design);
-        localStorage.setItem('nanoforgeDesigns', JSON.stringify(savedDesigns));
-        
-        alert(`Design "${sanitizedName}" saved successfully!`);
-    } catch (error) {
-        console.error('Error saving design:', error);
-        alert('There was an error saving your design. Please try again.');
-    }
+    // Create a design object to save
+    const designToSave = JSON.parse(JSON.stringify(currentDesign));
+    
+    // Add timestamp and name
+    designToSave.timestamp = new Date().toISOString();
+    designToSave.name = prompt("Enter a name for this design:", "My Nanoparticle Design");
+    
+    if (!designToSave.name) return; // User cancelled
+    
+    // Save to localStorage
+    let savedDesigns = JSON.parse(localStorage.getItem('nanoforgeDesigns') || '[]');
+    savedDesigns.push(designToSave);
+    localStorage.setItem('nanoforgeDesigns', JSON.stringify(savedDesigns));
+    
+    alert("Design saved successfully!");
 }
 
 function exportData() {
-    // Check if user is authorized
-    if (!isUserAuthorized()) {
-        return promptLogin();
-    }
-
     // Create export data with current design and calculated properties
     const exportData = {
         design: JSON.parse(JSON.stringify(currentDesign)),
@@ -1732,508 +1585,25 @@ function exportData() {
     
     const modalHeader = document.createElement('div');
     modalHeader.className = 'modal-header';
-    
-    // Sanitize content before adding to innerHTML
-    const headerHTML = document.createElement('div');
-    const headerTitle = document.createElement('h3');
-    headerTitle.textContent = 'Export Options';
-    headerHTML.appendChild(headerTitle);
-    
-    const closeSpan = document.createElement('span');
-    closeSpan.className = 'close';
-    closeSpan.innerHTML = '&times;';
-    headerHTML.appendChild(closeSpan);
-    
-    modalHeader.appendChild(headerHTML);
+    modalHeader.innerHTML = `
+        <h3>Export Options</h3>
+        <span class="close">&times;</span>
+    `;
     
     const modalBody = document.createElement('div');
     modalBody.className = 'modal-body';
-    
-    const modalBodyContent = document.createElement('div');
-    
-    const formatText = document.createElement('p');
-    formatText.textContent = 'Choose export format:';
-    modalBodyContent.appendChild(formatText);
-    
-    const exportOptions = document.createElement('div');
-    exportOptions.className = 'export-options';
-    
-    // Create export buttons safely
-    ['json', 'csv', 'pdf'].forEach(format => {
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-secondary export-btn';
-        btn.setAttribute('data-format', format);
-        
-        const icon = document.createElement('i');
-        icon.className = `fas fa-file-${format === 'json' ? 'code' : format}`;
-        btn.appendChild(icon);
-        
-        const text = document.createTextNode(` ${format.toUpperCase()}`);
-        btn.appendChild(text);
-        
-        exportOptions.appendChild(btn);
-    });
-    
-    modalBodyContent.appendChild(exportOptions);
-    modalBody.appendChild(modalBodyContent);
-    
-    const modalFooter = document.createElement('div');
-    modalFooter.className = 'modal-footer';
-    
-    const cancelBtn = document.createElement('button');
-    cancelBtn.id = 'cancelExportBtn';
-    cancelBtn.className = 'btn btn-secondary';
-    cancelBtn.textContent = 'Cancel';
-    modalFooter.appendChild(cancelBtn);
-    
-    modalContent.appendChild(modalHeader);
-    modalContent.appendChild(modalBody);
-    modalContent.appendChild(modalFooter);
-    exportModal.appendChild(modalContent);
-    
-    document.body.appendChild(exportModal);
-    
-    // Add event listeners
-    const closeBtn = exportModal.querySelector('.close');
-    const cancelBtnEl = exportModal.querySelector('#cancelExportBtn');
-    const exportBtns = exportModal.querySelectorAll('.export-btn');
-    
-    closeBtn.addEventListener('click', closeExportModal);
-    cancelBtnEl.addEventListener('click', closeExportModal);
-    
-    exportBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            const format = this.getAttribute('data-format');
-            
-            switch(format) {
-                case 'json':
-                    downloadJSON(exportData);
-                    break;
-                case 'csv':
-                    downloadCSV(exportData);
-                    break;
-                case 'pdf':
-                    downloadPDF(exportData);
-                    break;
-            }
-            
-            closeExportModal();
-        });
-    });
-    
-    function closeExportModal() {
-        if (document.body.contains(exportModal)) {
-            document.body.removeChild(exportModal);
-        }
-    }
-}
-
-function downloadJSON(data) {
-    const jsonString = JSON.stringify(data, null, 2);
-    const blob = new Blob([jsonString], { type: 'application/json' });
-    
-    // Create download link
-    const downloadLink = document.createElement('a');
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `nanoparticle-design-${new Date().toISOString().split('T')[0]}.json`;
-    
-    // Trigger download
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-}
-
-function downloadCSV(data) {
-    // Flatten the data structure for CSV
-    const flatData = {
-        'Core Material': data.design.core.material,
-        'Core Size (nm)': data.design.core.size,
-        'Core Shape': data.design.core.shape,
-        'Environment Medium': data.design.environment.medium,
-        'Environment pH': data.design.environment.ph,
-        'Environment Temperature (°C)': data.design.environment.temperature,
-        'Zeta Potential (mV)': data.properties.zetaPotential.toFixed(1),
-        'Hydrodynamic Diameter (nm)': data.properties.hydrodynamicDiameter.toFixed(1),
-        'Aggregation Potential': data.properties.aggregationPotential.description
-    };
-    
-    // Add layer data
-    data.design.layers.forEach((layer, index) => {
-        flatData[`Layer ${index+1} Type`] = layer.type;
-        flatData[`Layer ${index+1} Material`] = layer.material;
-        flatData[`Layer ${index+1} Thickness (nm)`] = layer.thickness;
-        flatData[`Layer ${index+1} Coverage (%)`] = layer.coverage;
-    });
-    
-    // Convert to CSV
-    const header = Object.keys(flatData).join(',');
-    const values = Object.values(flatData).join(',');
-    const csvContent = `${header}\n${values}`;
-    
-    // Create download
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const downloadLink = document.createElement('a');
-    downloadLink.href = URL.createObjectURL(blob);
-    downloadLink.download = `nanoparticle-design-${new Date().toISOString().split('T')[0]}.csv`;
-    
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-}
-
-function downloadPDF(data) {
-    // Make sure we're on the 3D view tab
-    document.querySelector('.tab[data-tab="view-3d"]').click();
-    
-    // Create a loading indicator
-    const loadingOverlay = document.createElement('div');
-    loadingOverlay.className = 'loading-overlay';
-    loadingOverlay.innerHTML = `
-        <div class="spinner"></div>
-        <div class="loading-text">Generating PDF...</div>
-    `;
-    document.body.appendChild(loadingOverlay);
-    
-    // Ensure 3D view is rendered
-    renderer.render(scene, camera);
-    
-    // Get the canvas image data
-    const canvasImage = document.getElementById('nanoparticleCanvas').toDataURL('image/png');
-    
-    setTimeout(() => {
-        try {
-            // Create PDF with jsPDF
-            const pdf = new jspdf.jsPDF();
-            
-            // Add title
-            pdf.setFontSize(20);
-            pdf.setTextColor(58, 134, 255); // #3a86ff
-            pdf.text('Nanoparticle Design Report', 105, 20, {align: 'center'});
-            
-            // Add date
-            pdf.setFontSize(10);
-            pdf.setTextColor(100, 100, 100);
-            pdf.text(`Generated on ${new Date().toLocaleDateString()}`, 105, 28, {align: 'center'});
-            
-            // Add core properties section
-            pdf.setFontSize(14);
-            pdf.setTextColor(0, 0, 0);
-            pdf.text('Core Properties', 20, 40);
-            
-            pdf.setFontSize(12);
-            pdf.text(`Material: ${capitalizeFirstLetter(data.design.core.material)}`, 25, 50);
-            pdf.text(`Size: ${data.design.core.size} nm`, 25, 58);
-            pdf.text(`Shape: ${capitalizeFirstLetter(data.design.core.shape)}`, 25, 66);
-            
-            // Add environment section
-            pdf.setFontSize(14);
-            pdf.text('Environment', 20, 80);
-            
-            pdf.setFontSize(12);
-            pdf.text(`Medium: ${capitalizeFirstLetter(data.design.environment.medium)}`, 25, 90);
-            pdf.text(`pH: ${data.design.environment.ph}`, 25, 98);
-            pdf.text(`Temperature: ${data.design.environment.temperature}°C`, 25, 106);
-            
-            // Add physical properties section
-            pdf.setFontSize(14);
-            pdf.text('Physical Properties', 20, 120);
-            
-            pdf.setFontSize(12);
-            pdf.text(`Hydrodynamic Diameter: ${data.properties.hydrodynamicDiameter.toFixed(1)} nm`, 25, 130);
-            pdf.text(`Zeta Potential: ${data.properties.zetaPotential.toFixed(1)} mV`, 25, 138);
-            pdf.text(`Aggregation Potential: ${data.properties.aggregationPotential.description}`, 25, 146);
-            
-            // Add the 3D visualization
-            pdf.addImage(canvasImage, 'PNG', 120, 40, 70, 70);
-            
-            // Add surface modifications table if there are layers
-            if (data.design.layers.length > 0) {
-                pdf.setFontSize(14);
-                pdf.text('Surface Modifications', 20, 165);
-                
-                // Table headers
-                pdf.setFillColor(240, 240, 240);
-                pdf.rect(20, 170, 170, 10, 'F');
-                pdf.setFontSize(10);
-                pdf.text('Material', 25, 177);
-                pdf.text('Type', 80, 177);
-                pdf.text('Thickness (nm)', 120, 177);
-                pdf.text('Coverage (%)', 160, 177);
-                
-                // Table rows
-                let yPos = 180;
-                data.design.layers.forEach((layer, index) => {
-                    // Alternate row coloring
-                    if (index % 2 === 1) {
-                        pdf.setFillColor(248, 248, 248);
-                        pdf.rect(20, yPos, 170, 10, 'F');
-                    }
-                    
-                    pdf.text(layer.materialName, 25, yPos + 7);
-                    pdf.text(capitalizeFirstLetter(layer.type), 80, yPos + 7);
-                    pdf.text(layer.thickness.toString(), 120, yPos + 7);
-                    pdf.text(layer.coverage.toString(), 160, yPos + 7);
-                    
-                    yPos += 10;
-                    
-                    // Add a new page if we're running out of space
-                    if (yPos > 270 && index < data.design.layers.length - 1) {
-                        pdf.addPage();
-                        
-                        // Reset yPos and add header on new page
-                        yPos = 20;
-                        pdf.setFontSize(14);
-                        pdf.text('Surface Modifications (continued)', 20, yPos);
-                        
-                        // Table headers on new page
-                        pdf.setFillColor(240, 240, 240);
-                        pdf.rect(20, yPos + 5, 170, 10, 'F');
-                        pdf.setFontSize(10);
-                        pdf.text('Material', 25, yPos + 12);
-                        pdf.text('Type', 80, yPos + 12);
-                        pdf.text('Thickness (nm)', 120, yPos + 12);
-                        pdf.text('Coverage (%)', 160, yPos + 12);
-                        
-                        yPos += 15;
-                    }
-                });
-            }
-            
-            // Save the PDF
-            pdf.save(`nanoparticle-design-${new Date().toISOString().split('T')[0]}.pdf`);
-        } catch (error) {
-            console.error('Error generating PDF:', error);
-            alert('An error occurred while generating the PDF. Please try again.');
-        } finally {
-            // Remove loading overlay
-            document.body.removeChild(loadingOverlay);
-        }
-    }, 500); // Small delay to ensure rendering is complete
-}
-
-function capitalizeFirstLetter(string) {
-    if (!string) return '';
-    return string.charAt(0).toUpperCase() + string.slice(1).replace(/-/g, ' ');
-}
-
-function onWindowResize() {
-    const canvasContainer = document.getElementById('nanoparticleCanvas');
-    
-    camera.aspect = canvasContainer.clientWidth / canvasContainer.clientHeight;
-    camera.updateProjectionMatrix();
-    
-    renderer.setSize(canvasContainer.clientWidth, canvasContainer.clientHeight);
-}
-
-// Add back createPartialCoverage for backward compatibility
-function createPartialCoverage(shape, innerDiameter, outerDiameter, color, coverage, coverageStyle) {
-    try {
-        // Use the safe version instead
-        createSafePartialCoverage(shape, innerDiameter, outerDiameter, color, coverage, coverageStyle);
-    } catch (error) {
-        console.error("Error in createPartialCoverage:", error);
-    }
-}
-
-function initClippingControls() {
-    // Get control elements
-    const crossSectionToggle = document.getElementById('crossSectionToggle');
-    const crossSectionControls = document.getElementById('crossSectionControls');
-    const crossSectionAxis = document.getElementById('crossSectionAxis');
-    const crossSectionPosition = document.getElementById('crossSectionPosition');
-    const resetCrossSectionBtn = document.getElementById('resetCrossSectionBtn');
-    const showHelperPlaneToggle = document.getElementById('showHelperPlane');
-    
-    // Toggle cross-section view
-    crossSectionToggle.addEventListener('change', (e) => {
-        clippingEnabled = e.target.checked;
-        crossSectionControls.style.display = clippingEnabled ? 'block' : 'none';
-        
-        updateClippingPlane();
-        createNanoparticle(); // Recreate with or without clipping
-        
-        // Show a notification about the keyboard shortcut the first time cross-section is enabled
-        if (clippingEnabled) {
-            showToast('Press H key to toggle helper plane visibility', 3000);
-        }
-    });
-    
-    // Change clipping axis
-    crossSectionAxis.addEventListener('change', (e) => {
-        clippingAxis = e.target.value;
-        updateClippingPlane();
-        createNanoparticle();
-    });
-    
-    // Update clipping position
-    crossSectionPosition.addEventListener('input', (e) => {
-        clippingPosition = parseFloat(e.target.value);
-        updateClippingPlane();
-        
-        // Only update the helper plane, not the entire nanoparticle for better performance
-        if (clipHelperPlane) {
-            scene.remove(clipHelperPlane);
-            if (showHelperPlane) {
-                addClippingPlaneHelper();
-            }
-        }
-    });
-    
-    // Helper plane toggle
-    showHelperPlaneToggle.addEventListener('change', (e) => {
-        showHelperPlane = e.target.checked;
-        
-        if (clipHelperPlane) {
-            scene.remove(clipHelperPlane);
-            clipHelperPlane = null;
-        }
-        
-        if (showHelperPlane && clippingEnabled) {
-            addClippingPlaneHelper();
-        }
-    });
-    
-    // Reset cross-section
-    resetCrossSectionBtn.addEventListener('click', () => {
-        clippingPosition = 0;
-        crossSectionPosition.value = 0;
-        updateClippingPlane();
-        
-        if (clipHelperPlane) {
-            scene.remove(clipHelperPlane);
-            if (showHelperPlane) {
-                addClippingPlaneHelper();
-            }
-        }
-    });
-}
-
-function updateClippingPlane() {
-    // Create normal vector based on selected axis
-    let normal;
-    switch (clippingAxis) {
-        case 'x':
-            normal = new THREE.Vector3(1, 0, 0);
-            break;
-        case 'y':
-            normal = new THREE.Vector3(0, 1, 0);
-            break;
-        case 'z':
-        default:
-            normal = new THREE.Vector3(0, 0, 1);
-            break;
-    }
-    
-    // Calculate the distance (constant) value for the plane equation ax + by + cz + d = 0
-    // This represents how far from the origin the plane is positioned
-    let distance = clippingPosition * (currentDesign.core.size / 2);
-    
-    // Update clipping plane with new normal and position
-    clippingPlane.normal.copy(normal);
-    clippingPlane.constant = distance;
-}
-
-function addClippingPlaneHelper() {
-    // Calculate appropriate size for helper plane based on particle size
-    // Make it just slightly larger than the particle for less intrusion
-    const particleSize = currentDesign.core.size;
-    const totalSize = calculateHydrodynamicDiameter(currentDesign);
-    
-    // Size the helper plane to just cover the particle with a small margin
-    const size = totalSize * 1.1;
-    
-    // Create a plane geometry parallel to the clipping plane
-    const helperGeo = new THREE.PlaneGeometry(size, size);
-    
-    // Create a more transparent material for the helper
-    const helperMat = new THREE.MeshBasicMaterial({
-        color: 0x88ddff,
-        side: THREE.DoubleSide,
-        transparent: true,
-        opacity: 0.03, // Almost invisible
-        depthWrite: false
-    });
-    
-    // Create the helper plane mesh
-    clipHelperPlane = new THREE.Mesh(helperGeo, helperMat);
-    
-    // Position and rotate helper to match clipping plane
-    // The orientation depends on which axis we're clipping along
-    switch (clippingAxis) {
-        case 'x':
-            clipHelperPlane.rotation.y = Math.PI / 2;
-            clipHelperPlane.position.x = clippingPosition * (currentDesign.core.size / 2);
-            break;
-        case 'y':
-            clipHelperPlane.rotation.x = Math.PI / 2;
-            clipHelperPlane.position.y = clippingPosition * (currentDesign.core.size / 2);
-            break;
-        case 'z':
-        default:
-            clipHelperPlane.position.z = clippingPosition * (currentDesign.core.size / 2);
-            break;
-    }
-    
-    // Add the helper to the scene
-    scene.add(clipHelperPlane);
-}
-
-// Function to show toast notifications
-function showToast(message, duration = 2000) {
-    // Check if a toast container already exists
-    let toastContainer = document.querySelector('.toast-container');
-    
-    // Create container if it doesn't exist
-    if (!toastContainer) {
-        toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container';
-        toastContainer.style.position = 'fixed';
-        toastContainer.style.bottom = '20px';
-        toastContainer.style.left = '50%';
-        toastContainer.style.transform = 'translateX(-50%)';
-        toastContainer.style.zIndex = '1000';
-        document.body.appendChild(toastContainer);
-    }
-    
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    toast.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-    toast.style.color = 'white';
-    toast.style.padding = '10px 20px';
-    toast.style.borderRadius = '4px';
-    toast.style.marginTop = '10px';
-    toast.style.boxShadow = '0 2px 10px rgba(0, 0, 0, 0.2)';
-    toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateY(20px)';
-    toast.textContent = message;
-    
-    // Add to container
-    toastContainer.appendChild(toast);
-    
-    // Trigger reflow to enable transition
-    toast.offsetHeight;
-    
-    // Show toast
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateY(0)';
-    
-    // Auto-remove after duration
-    setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateY(20px)';
-        
-        // Remove from DOM after fade out
-        setTimeout(() => {
-            if (toast.parentNode) {
-                toast.parentNode.removeChild(toast);
-            }
-            
-            // Remove container if empty
-            if (toastContainer.children.length === 0) {
-                document.body.removeChild(toastContainer);
-            }
-        }, 300);
-    }, duration);
+    modalBody.innerHTML = `
+        <p>Choose export format:</p>
+        <div class="export-options">
+            <button class="btn btn-secondary export-btn" data-format="json">
+                <i class="fas fa-file-code"></i> JSON
+            </button>
+            <button class="btn btn-secondary export-btn" data-format="csv">
+                <i class="fas fa-file-csv"></i> CSV
+            </button>
+            <button class="btn btn-secondary export-btn" data-format="pdf">
+                <i class="fas fa-file-pdf"></i> PDF Report
+            </button>
+        </div>
+    `
 }

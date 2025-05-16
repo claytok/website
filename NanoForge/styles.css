@@ -1067,15 +1067,23 @@ input:checked + .slider-switch:before {
 
 /* Cross-Section View Controls */
 .view-controls {
-    background-color: rgba(255, 255, 255, 0.85);
-    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.5);
+    padding: 0.75rem;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     position: absolute;
-    top: 1rem;
+    bottom: 1rem;
     right: 1rem;
-    width: 250px;
+    width: 200px;
     z-index: 10;
+    transition: all 0.3s ease;
+    font-size: 0.9em;
+    opacity: 0.7;
+}
+
+.view-controls:hover {
+    background-color: rgba(255, 255, 255, 0.95);
+    opacity: 1;
 }
 
 .view-control-group {
@@ -1125,13 +1133,13 @@ input:checked + .slider-switch:before {
 .toggle-container {
     position: relative;
     display: inline-block;
-    width: 50px;
-    height: 24px;
+    width: 40px;
+    height: 22px;
 }
 
 .toggle-small {
-    width: 40px;
-    height: 20px;
+    width: 34px;
+    height: 18px;
 }
 
 .toggle-input {
